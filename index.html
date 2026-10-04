@@ -799,6 +799,9 @@
         multiplicacion: { label: 'Multiplicación', category: 'Aritmética' },
         division: { label: 'División', category: 'Aritmética' },
         compuestas: { label: 'Compuestas', category: 'Aritmética' },
+        potencias: { label: 'Potencias', category: 'Aritmética' },
+        radicales: { label: 'Radicales', category: 'Aritmética' },
+        jerarquia: { label: 'Jerarquía operacional', category: 'Aritmética' },
         logicos: { label: 'Comparaciones', category: 'Lógica' },
         logicaBooleana: { label: 'Lógica booleana', category: 'Lógica' },
         algebra: { label: 'Álgebra', category: 'Álgebra' },
@@ -823,6 +826,9 @@
           multiplicacion: true,
           division: true,
           compuestas: true,
+          potencias: true,
+          radicales: true,
+          jerarquia: true,
           logicos: true,
           logicaBooleana: true,
           algebra: true,
@@ -1171,6 +1177,14 @@
                 <p>Las preguntas combinan operadores y aceptan True/False o Verdadero/Falso.</p>
               </details>
             ` : ''}
+            ${category === 'Aritmética' ? `
+              <details class="operation-guide">
+                <summary>Guía de potencias, radicales y jerarquía</summary>
+                <p><strong>Potencias:</strong> la base se multiplica por sí misma el número de veces indicado por el exponente; por ejemplo, 2^3 = 8.</p>
+                <p><strong>Radicales:</strong> encuentra el número que elevado al índice produce el radicando; se usan raíces cuadradas y cúbicas exactas.</p>
+                <p><strong>Orden:</strong> resuelve primero los signos de agrupación desde el más interno hacia afuera: paréntesis ( ), corchetes [ ] y llaves { }; después potencias y raíces, multiplicaciones/divisiones y sumas/restas.</p>
+              </details>
+            ` : ''}
             <div class="operation-grid">
               ${entries.map(([key, config]) => {
                 const checked = state.settings.operations[key] ? 'checked' : '';
@@ -1292,6 +1306,76 @@
           label: 'División',
           expression: `${dividend} ÷ ${divisor}`,
           answer: quotient,
+        };
+      }
+
+      function buildPowerQuestion() {
+        const difficulty = state.settings.difficulty;
+        const maxBase = difficulty === 'dificil' ? 8 : difficulty === 'medio' ? 6 : 5;
+        const maxExponent = difficulty === 'dificil' ? 5 : difficulty === 'medio' ? 4 : 3;
+        const base = randomNumber(2, maxBase);
+        const exponent = randomNumber(2, maxExponent);
+        return {
+          type: 'number',
+          label: 'Potencias',
+          expression: `${base}^${exponent} = ?`,
+          answer: Math.pow(base, exponent),
+        };
+      }
+
+      function buildRadicalQuestion() {
+        const difficulty = state.settings.difficulty;
+        const degree = randomNumber(2, 3);
+        const maxRoot = difficulty === 'dificil' ? 25 : difficulty === 'medio' ? 15 : 10;
+        const root = randomNumber(2, maxRoot);
+        const radicand = Math.pow(root, degree);
+        return {
+          type: 'number',
+          label: degree === 2 ? 'Radicales · raíz cuadrada' : 'Radicales · raíz cúbica',
+          expression: `${degree === 2 ? '√' : '∛'}(${radicand}) = ?`,
+          answer: root,
+        };
+      }
+
+      function buildOrderOfOperationsQuestion() {
+        const difficulty = state.settings.difficulty;
+        const max = Math.max(4, Math.min(99, Math.pow(10, clampDigits(state.settings.digits)) - 1));
+        const a = randomNumber(2, max);
+        const b = randomNumber(2, max);
+        const c = randomNumber(3, max);
+        const d = randomNumber(1, c - 1);
+        const divisor = randomNumber(2, 10);
+        const quotient = randomNumber(1, 10);
+        const dividend = divisor * quotient;
+        const groupedProduct = (a + b) * (c - d);
+        const division = dividend / divisor;
+        const groupedExpression = `[ (${a} + ${b}) × (${c} - ${d}) ]`;
+        let expression = `{ ${groupedExpression} + (${dividend} ÷ ${divisor}) }`;
+        let answer = groupedProduct + division;
+        let power = 0;
+        let powerExpression = '';
+
+        if (difficulty !== 'facil') {
+          const base = randomNumber(2, difficulty === 'dificil' ? 8 : 6);
+          const exponent = randomNumber(2, difficulty === 'dificil' ? 5 : 4);
+          power = Math.pow(base, exponent);
+          powerExpression = `(${base}^${exponent})`;
+          expression = `{ ${groupedExpression} + ${powerExpression} - (${dividend} ÷ ${divisor}) }`;
+          answer = groupedProduct + power - division;
+        }
+
+        if (difficulty === 'dificil') {
+          const degree = randomNumber(2, 3);
+          const root = randomNumber(2, 10);
+          expression = `{ ${groupedExpression} + ${powerExpression} - (${dividend} ÷ ${divisor}) + ${degree === 2 ? '√' : '∛'}(${Math.pow(root, degree)}) }`;
+          answer += root;
+        }
+
+        return {
+          type: 'number',
+          label: 'Jerarquía operacional',
+          expression: `${expression} = ?`,
+          answer,
         };
       }
 
@@ -1622,6 +1706,9 @@
         if (op === 'resta') return buildSubtraction();
         if (op === 'multiplicacion') return buildMultiplication();
         if (op === 'division') return buildDivision();
+        if (op === 'potencias') return buildPowerQuestion();
+        if (op === 'radicales') return buildRadicalQuestion();
+        if (op === 'jerarquia') return buildOrderOfOperationsQuestion();
         if (op === 'logicos') return buildLogicalQuestion();
         if (op === 'logicaBooleana') return buildBooleanQuestion();
         if (op === 'algebra') return buildAlgebraQuestion();
