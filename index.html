@@ -1,0 +1,2771 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Entrenador de Matemáticas</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg-1: #050711;
+        --bg-2: #0b1020;
+        --panel: #0d1423;
+        --panel-soft: #111d30;
+        --primary: #14f1d9;
+        --primary-dark: #14f1d9;
+        --danger: #ff5470;
+        --success: #54f6a5;
+        --warning: #ffd166;
+        --text: #edf7ff;
+        --muted: #8fa5bb;
+        --shadow: rgba(0, 0, 0, 0.46);
+        --accent: #11152a;
+        --accent-border: #26354d;
+        --cyan-glow: rgba(20, 241, 217, 0.22);
+        --pink: #ff4fd8;
+        --line: #26354d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        min-height: 100vh;
+        font-family: Inter, "Segoe UI", Arial, sans-serif;
+        background:
+          radial-gradient(ellipse at 12% 6%, rgba(0, 220, 255, 0.12), transparent 32rem),
+          radial-gradient(ellipse at 90% 84%, rgba(255, 79, 216, 0.09), transparent 34rem),
+          linear-gradient(145deg, var(--bg-1), var(--bg-2) 60%, #080b16);
+        color: var(--text);
+      }
+
+      body {
+        display: block;
+        padding: clamp(16px, 3vw, 36px);
+        background-image:
+          linear-gradient(rgba(74, 116, 145, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(74, 116, 145, 0.045) 1px, transparent 1px),
+          radial-gradient(ellipse at 12% 6%, rgba(0, 220, 255, 0.12), transparent 32rem),
+          radial-gradient(ellipse at 90% 84%, rgba(255, 79, 216, 0.09), transparent 34rem),
+          linear-gradient(145deg, var(--bg-1), var(--bg-2) 60%, #080b16);
+        background-size: 34px 34px, 34px 34px, auto, auto, auto;
+      }
+
+      .game-shell {
+        width: min(100%, 820px);
+        margin: 0 auto;
+      }
+
+      .game-card {
+        background: var(--panel);
+        border-radius: 22px;
+        padding: clamp(1rem, 3vw, 2rem);
+        box-shadow: 0 24px 80px var(--shadow), 0 0 42px rgba(20, 241, 217, 0.045);
+        border: 1px solid #26364c;
+      }
+
+      .topbar,
+      .status-row,
+      .actions,
+      .settings-grid {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .score-box,
+      .status-item {
+        background: var(--panel-soft);
+        border-radius: 14px;
+        padding: 0.8rem 1rem;
+        flex: 1;
+        text-align: center;
+      }
+
+      .score-box strong,
+      .status-item strong {
+        display: block;
+        font-size: 1.5rem;
+        margin-top: 0.25rem;
+      }
+
+      .label {
+        display: block;
+        font-size: 0.72rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .main-score {
+        background: linear-gradient(135deg, #10262f, #122334);
+      }
+
+      .settings-panel {
+        margin-top: 1.25rem;
+        background: rgba(13, 20, 35, 0.78);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 1rem;
+      }
+
+      .settings-panel h2 {
+        margin: 0 0 0.85rem;
+        font-size: 1rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .operation-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.7rem;
+      }
+
+      .operation-category {
+        margin-top: 1rem;
+      }
+
+      .operation-category:first-child {
+        margin-top: 0;
+      }
+
+      .operation-category h3 {
+        margin: 0 0 0.55rem;
+        color: var(--muted);
+        font-size: 0.75rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .operation-category.finalboss h3 {
+        color: #7c3aed;
+      }
+
+      .operation-category.finalboss .option-card.checked {
+        border-color: #7c3aed;
+        background: #ede9fe;
+      }
+
+      .option-card {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.7rem 0.8rem;
+        border-radius: 12px;
+        background: #101a2a;
+        border: 1px solid #27364d;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+
+      .option-card input {
+        accent-color: var(--primary);
+        width: 18px;
+        height: 18px;
+      }
+
+      .option-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 0 14px var(--cyan-glow);
+      }
+
+      .option-card.checked {
+        border-color: rgba(20, 241, 217, 0.55);
+        background: linear-gradient(135deg, rgba(20, 241, 217, 0.11), rgba(20, 241, 217, 0.035));
+      }
+
+      .operation-category.finalboss .option-card.checked {
+        border-color: var(--pink);
+        background: linear-gradient(135deg, rgba(255, 79, 216, 0.13), rgba(255, 79, 216, 0.035));
+      }
+
+      .settings-grid {
+        margin-top: 1rem;
+        align-items: stretch;
+      }
+
+      .setting-group {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .setting-group label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .setting-group select,
+      .setting-group input {
+        width: 100%;
+        border: 1px solid #30445e;
+        border-radius: 10px;
+        background: #09111e;
+        color: var(--text);
+        padding: 0.72rem 0.8rem;
+        font-size: 1rem;
+      }
+
+      .status-row {
+        margin-top: 1rem;
+      }
+
+      .question-panel {
+        margin-top: 1.5rem;
+        background:
+          radial-gradient(ellipse at 50% 0%, rgba(20, 241, 217, 0.09), transparent 70%),
+          linear-gradient(145deg, #10192b, #0c1321);
+        border-radius: 16px;
+        padding: clamp(1.1rem, 3vw, 1.8rem) 1rem;
+        text-align: center;
+        border: 1px solid var(--accent-border);
+        box-shadow: inset 0 0 32px rgba(20, 241, 217, 0.025);
+      }
+
+      .question-label {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.7rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+
+      #question {
+        margin: 0.5rem 0 0;
+        font-size: clamp(1.65rem, 4.3vw, 2.8rem);
+        letter-spacing: 0.04em;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+      }
+
+      .question-visual {
+        max-width: 560px;
+        margin: 1.25rem auto 0;
+        padding: 1rem;
+        border: 1px solid #24364b;
+        border-radius: 14px;
+        background: rgba(5, 10, 19, 0.55);
+        text-align: center;
+        color: var(--text);
+      }
+
+      .question-visual[hidden] {
+        display: none;
+      }
+
+      .chart-svg {
+        display: block;
+        width: min(100%, 520px);
+        height: auto;
+        margin: 0 auto;
+        overflow: hidden;
+      }
+
+      .chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.55rem 1rem;
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: #c0d0df;
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+
+      .legend-swatch {
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 3px;
+        box-shadow: 0 0 9px currentColor;
+      }
+
+      .dice-display {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0.75rem auto;
+      }
+
+      .die {
+        display: grid;
+        grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+        gap: 3px;
+        width: 64px;
+        height: 64px;
+        padding: 9px;
+        border: 1px solid #38516c;
+        border-radius: 12px;
+        background: linear-gradient(145deg, #142237, #0c1422);
+        box-shadow: 0 0 20px rgba(20, 241, 217, 0.09), inset 0 0 18px rgba(20, 241, 217, 0.04);
+      }
+
+      .die-pip {
+        width: 9px;
+        height: 9px;
+        align-self: center;
+        justify-self: center;
+        border-radius: 50%;
+        background: var(--primary);
+        box-shadow: 0 0 7px var(--primary);
+      }
+
+      .vector-display {
+        margin-top: 0.7rem;
+        color: #9bfaf0;
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+
+      .vector-plane {
+        max-width: 460px;
+      }
+
+      .vector-grid {
+        stroke: #1c3044;
+        stroke-width: 0.8;
+      }
+
+      .vector-tick {
+        fill: #9aafc4;
+        font-size: 9px;
+      }
+
+      .vector-origin {
+        fill: #edf7ff;
+        font-size: 10px;
+      }
+
+      .vector-axis-label {
+        fill: #14f1d9;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .answer-box {
+        margin-top: 1.25rem;
+      }
+
+      #answer-input {
+        width: 100%;
+        border: 1px solid #30445e;
+        border-radius: 12px;
+        background: #080f1b;
+        color: var(--text);
+        font-size: 1.3rem;
+        padding: 0.9rem 1rem;
+        text-align: center;
+      }
+
+      #answer-input:focus {
+        outline: 3px solid rgba(20, 241, 217, 0.14);
+        border-color: var(--primary);
+        box-shadow: 0 0 18px var(--cyan-glow);
+      }
+
+      .actions {
+        margin-top: 1.25rem;
+      }
+
+      button {
+        border: 1px solid transparent;
+        border-radius: 11px;
+        font-size: 1rem;
+        font-weight: 700;
+        padding: 0.9rem 1.2rem;
+        cursor: pointer;
+        transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      }
+
+      button:hover { transform: translateY(-1px); }
+      button:active { transform: translateY(1px); }
+
+      #check-btn {
+        flex: 2;
+        background: linear-gradient(100deg, #00cdbb, #14f1d9);
+        color: #031212;
+        box-shadow: 0 0 22px rgba(20, 241, 217, 0.2);
+      }
+
+      #check-btn:hover {
+        box-shadow: 0 0 28px rgba(20, 241, 217, 0.36);
+      }
+
+      .secondary {
+        flex: 1;
+        background: #121e30;
+        border-color: #2a3b52;
+        color: #d7e5f1;
+      }
+
+      .message {
+        min-height: 1.6rem;
+        margin-top: 1rem;
+        text-align: center;
+        font-weight: 700;
+      }
+
+      .message.success { color: var(--success); }
+      .message.error { color: var(--danger); }
+      .message.info { color: var(--warning); }
+
+      .history-box {
+        margin-top: 1.5rem;
+        background: #0c1422;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 1rem;
+      }
+
+      .history-box h2 {
+        margin: 0 0 0.75rem;
+        font-size: 1rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      #history-list {
+        margin: 0;
+        padding-left: 1.2rem;
+      }
+
+      #history-list li + li {
+        margin-top: 0.35rem;
+      }
+
+      .score-box,
+      .status-item {
+        background: #101a2a;
+        border: 1px solid #24364b;
+      }
+
+      .score-box strong,
+      .status-item strong {
+        color: var(--primary);
+        text-shadow: 0 0 14px rgba(20, 241, 217, 0.28);
+      }
+
+      .score-box.main-score strong {
+        color: var(--pink);
+        text-shadow: 0 0 14px rgba(255, 79, 216, 0.3);
+      }
+
+      select,
+      input {
+        color-scheme: dark;
+      }
+
+      .question-label,
+      .settings-panel h2,
+      .history-box h2 {
+        color: #b8c9d9;
+      }
+
+      .chart-svg text {
+        font-family: Inter, "Segoe UI", Arial, sans-serif;
+        font-size: 11px;
+        fill: #c8d8e8;
+      }
+
+      .chart-grid {
+        stroke: #25374d;
+        stroke-width: 1;
+        stroke-dasharray: 3 5;
+      }
+
+      .chart-axis {
+        stroke: #68809a;
+        stroke-width: 1.25;
+      }
+
+      .chart-bar {
+        fill: #14f1d9;
+        filter: drop-shadow(0 0 5px rgba(20, 241, 217, 0.35));
+      }
+
+      .chart-line {
+        fill: none;
+        stroke: #14f1d9;
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        filter: drop-shadow(0 0 4px rgba(20, 241, 217, 0.45));
+      }
+
+      .chart-point {
+        fill: #ff4fd8;
+        stroke: #ffe2fb;
+        stroke-width: 1.5;
+      }
+
+      .chart-pie-slice {
+        stroke: #101827;
+        stroke-width: 2;
+      }
+
+      .vector-axis {
+        stroke: #3c5069;
+        stroke-width: 1;
+      }
+
+      .vector-arrow {
+        stroke-width: 3;
+        filter: drop-shadow(0 0 4px currentColor);
+      }
+
+      .die-pip {
+        background: var(--primary);
+        box-shadow: 0 0 7px var(--primary);
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 3px;
+      }
+
+      .page-tabs {
+        display: flex;
+        gap: 0.6rem;
+        margin: 0 auto 1rem;
+        padding: 0.35rem;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(8, 14, 25, 0.9);
+      }
+
+      .page-tab {
+        flex: 1;
+        color: var(--muted);
+        background: transparent;
+        border-color: transparent;
+      }
+
+      .page-tab.active {
+        color: #031212;
+        background: var(--primary);
+        box-shadow: 0 0 20px var(--cyan-glow);
+      }
+
+      .app-section[hidden] {
+        display: none;
+      }
+
+      .nursing-section {
+        display: grid;
+        gap: 1.1rem;
+      }
+
+      .nursing-header,
+      .panel-heading,
+      .nursing-actions,
+      .anatomy-view-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.8rem;
+      }
+
+      .nursing-header h1 {
+        margin: 0.25rem 0;
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+      }
+
+      .nursing-header p,
+      .section-help,
+      .muted-copy {
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .muted-copy,
+      .section-help {
+        margin: 0.35rem 0 0;
+      }
+
+      .eyebrow {
+        margin: 0;
+        color: var(--primary);
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+      }
+
+      .module-badge {
+        padding: 0.5rem 0.7rem;
+        border: 1px solid rgba(255, 79, 216, 0.45);
+        border-radius: 999px;
+        color: #ff9fe9;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        white-space: nowrap;
+      }
+
+      .clinical-notice {
+        padding: 1rem;
+        border: 1px solid rgba(255, 209, 102, 0.42);
+        border-left: 4px solid var(--warning);
+        border-radius: 12px;
+        background: rgba(255, 209, 102, 0.07);
+        color: #f6e8c6;
+        line-height: 1.55;
+      }
+
+      .clinical-notice p {
+        margin: 0.35rem 0 0;
+      }
+
+      .nursing-panel {
+        min-width: 0;
+        padding: clamp(1rem, 2.5vw, 1.4rem);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(10, 17, 29, 0.78);
+      }
+
+      .nursing-panel h2 {
+        margin: 0.25rem 0 0;
+        font-size: clamp(1.1rem, 2.5vw, 1.35rem);
+      }
+
+      .nursing-form {
+        display: grid;
+        gap: 0.9rem;
+        margin-top: 1rem;
+      }
+
+      .measurement-guide {
+        margin-top: 0.85rem;
+        padding: 0.75rem 0.9rem;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #0a1220;
+        color: var(--muted);
+        font-size: 0.86rem;
+        line-height: 1.5;
+      }
+
+      .measurement-guide summary {
+        color: #b8c9d9;
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .measurement-guide ul {
+        display: grid;
+        gap: 0.45rem;
+        padding-left: 1.2rem;
+      }
+
+      .vitals-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.8rem;
+      }
+
+      .notes-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.8rem;
+      }
+
+      .nursing-field {
+        display: grid;
+        align-content: start;
+        gap: 0.4rem;
+        min-width: 0;
+      }
+
+      .nursing-field label {
+        color: #b8c9d9;
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+
+      .nursing-field input,
+      .nursing-field textarea,
+      .nursing-field select {
+        width: 100%;
+        min-width: 0;
+        border: 1px solid #30445e;
+        border-radius: 9px;
+        padding: 0.7rem 0.75rem;
+        background: #080f1b;
+        color: var(--text);
+        font: inherit;
+      }
+
+      .nursing-field textarea {
+        resize: vertical;
+      }
+
+      .nursing-actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .nursing-primary {
+        color: #031212;
+        background: var(--primary);
+        box-shadow: 0 0 16px var(--cyan-glow);
+      }
+
+      .nursing-feedback {
+        min-height: 1.35rem;
+        margin: 0;
+        color: var(--success);
+        font-size: 0.88rem;
+      }
+
+      .table-wrap {
+        width: 100%;
+        margin-top: 0.75rem;
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+
+      .nursing-table {
+        width: 100%;
+        min-width: 740px;
+        border-collapse: collapse;
+        font-size: 0.82rem;
+      }
+
+      .nursing-table caption {
+        padding: 0.75rem;
+        text-align: left;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .nursing-table th,
+      .nursing-table td {
+        padding: 0.65rem;
+        text-align: left;
+        vertical-align: top;
+        border-top: 1px solid var(--line);
+      }
+
+      .nursing-table th {
+        color: #9fb6c9;
+        background: #111d30;
+      }
+
+      .anatomy-layout {
+        display: grid;
+        grid-template-columns: minmax(240px, 0.9fr) minmax(250px, 1.1fr);
+        gap: clamp(1rem, 3vw, 2rem);
+        align-items: start;
+        margin-top: 1rem;
+      }
+
+      .anatomy-figure-wrap {
+        min-width: 0;
+        padding: 0.8rem;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #080f1b;
+      }
+
+      .anatomy-view-toggle {
+        justify-content: center;
+      }
+
+      .view-toggle {
+        padding: 0.55rem 0.85rem;
+        color: var(--muted);
+        border-color: #2a3b52;
+        background: #111d30;
+        font-size: 0.82rem;
+      }
+
+      .view-toggle.active {
+        color: #031212;
+        border-color: var(--primary);
+        background: var(--primary);
+      }
+
+      .body-map {
+        display: block;
+        width: min(100%, 300px);
+        height: auto;
+        margin: 0.5rem auto 0;
+        overflow: visible;
+      }
+
+      .body-silhouette {
+        fill: url(#body-fill);
+        stroke: #44627a;
+        stroke-width: 2;
+      }
+
+      .region-hit {
+        fill: rgba(20, 241, 217, 0.07);
+        stroke: rgba(20, 241, 217, 0.28);
+        stroke-width: 1.4;
+        cursor: pointer;
+        transition: fill 0.15s ease, stroke 0.15s ease;
+      }
+
+      .body-region:hover .region-hit,
+      .body-region:focus .region-hit,
+      .body-region.selected .region-hit {
+        fill: rgba(20, 241, 217, 0.28);
+        stroke: var(--primary);
+        stroke-width: 2.5;
+      }
+
+      .body-axis {
+        pointer-events: none;
+        stroke-width: 2;
+        stroke-dasharray: 7 5;
+        opacity: 0.8;
+      }
+
+      .body-axis-longitudinal {
+        stroke: #14f1d9;
+      }
+
+      .body-axis-transverse {
+        stroke: #ff4fd8;
+      }
+
+      .body-axis-sagittal {
+        stroke: #ffd166;
+        opacity: 0.9;
+      }
+
+      .body-plane-overlay {
+        fill: rgba(20, 241, 217, 0.17);
+        stroke: rgba(20, 241, 217, 0.8);
+        stroke-width: 1.5;
+        pointer-events: none;
+      }
+
+      .selected-region {
+        min-height: 1.4rem;
+        margin: 0.5rem 0 0;
+        color: var(--primary);
+        text-align: center;
+        font-weight: 700;
+      }
+
+      .anatomy-notes {
+        display: grid;
+        gap: 0.8rem;
+      }
+
+      .anatomy-description {
+        margin: 0;
+        padding: 0.75rem;
+        border-left: 3px solid var(--primary);
+        border-radius: 0 8px 8px 0;
+        background: rgba(20, 241, 217, 0.06);
+        line-height: 1.5;
+      }
+
+      .axis-legend {
+        padding: 0.85rem;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #0d1726;
+      }
+
+      .axis-legend h3 {
+        margin: 0 0 0.6rem;
+        color: #c4d5e5;
+        font-size: 0.9rem;
+      }
+
+      .axis-legend p {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        margin: 0.45rem 0 0;
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      .axis-legend strong {
+        color: #d5e4f2;
+      }
+
+      .axis-dot {
+        width: 0.65rem;
+        height: 0.65rem;
+        flex: 0 0 auto;
+        border-radius: 50%;
+      }
+
+      .axis-dot.longitudinal { background: #14f1d9; }
+      .axis-dot.transverse { background: #ff4fd8; }
+      .axis-dot.sagittal { background: #ffd166; }
+
+      .notes-list {
+        display: grid;
+        gap: 0.7rem;
+        margin-top: 1rem;
+      }
+
+      .note-card {
+        padding: 0.85rem;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #0c1422;
+      }
+
+      .note-card header {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.8rem;
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .note-card h3 {
+        margin: 0.5rem 0 0.2rem;
+        color: var(--primary);
+        font-size: 1rem;
+      }
+
+      .note-card p {
+        margin: 0.4rem 0 0;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .note-card button {
+        padding: 0.4rem 0.6rem;
+        color: #ffb0bd;
+        border-color: rgba(255, 84, 112, 0.35);
+        background: rgba(255, 84, 112, 0.08);
+        font-size: 0.76rem;
+      }
+
+      .empty-state {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .source-list {
+        display: grid;
+        gap: 0.6rem;
+        padding-left: 1.25rem;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .source-list a {
+        color: var(--primary);
+        text-underline-offset: 3px;
+      }
+
+      .compact-notice {
+        margin-top: 1rem;
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 700px) {
+        .game-shell {
+          width: min(100%, 620px);
+        }
+
+        .settings-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .anatomy-layout {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .body-map {
+          max-height: 390px;
+        }
+
+        .vitals-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 480px) {
+        body {
+          padding: 12px;
+        }
+
+        .game-card {
+          padding: 0.85rem;
+          border-radius: 16px;
+        }
+
+        .operation-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar,
+        .status-row {
+          gap: 0.55rem;
+        }
+
+        .score-box,
+        .status-item {
+          padding: 0.65rem 0.5rem;
+        }
+
+        .score-box strong,
+        .status-item strong {
+          font-size: 1.25rem;
+        }
+
+        .settings-grid {
+          grid-template-columns: 1fr;
+          gap: 0.75rem;
+        }
+
+        .actions {
+          gap: 0.6rem;
+        }
+
+        button {
+          padding: 0.8rem 0.65rem;
+          font-size: 0.92rem;
+        }
+
+        #question {
+          font-size: clamp(1.35rem, 6vw, 2rem);
+        }
+
+        .question-visual {
+          padding: 0.6rem;
+        }
+
+        .chart-legend {
+          font-size: 0.75rem;
+        }
+
+        .nursing-header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .notes-grid,
+        .vitals-grid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .nursing-actions > button {
+          flex: 1;
+        }
+
+        .clinical-notice,
+        .nursing-panel {
+          padding: 0.8rem;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="game-shell">
+      <nav class="page-tabs" role="tablist" aria-label="Secciones de la aplicación">
+        <button class="page-tab active" id="math-tab" type="button" role="tab" tabindex="0" aria-selected="true" aria-controls="math-section">Entrenador</button>
+        <button class="page-tab" id="nursing-tab" type="button" role="tab" tabindex="-1" aria-selected="false" aria-controls="nursing-section">Enfermería</button>
+      </nav>
+
+      <section id="math-section" class="game-card app-section" role="tabpanel" tabindex="0" aria-labelledby="math-tab">
+        <header class="topbar">
+          <div class="score-box">
+            <span class="label">Mejor</span>
+            <strong id="best-score">0</strong>
+          </div>
+          <div class="score-box main-score">
+            <span class="label">Puntuación</span>
+            <strong id="score">0</strong>
+          </div>
+        </header>
+
+        <section class="settings-panel">
+          <h2>Menú de práctica</h2>
+
+          <div id="operation-options" aria-label="operaciones disponibles"></div>
+
+          <div class="settings-grid">
+            <div class="setting-group">
+              <label for="mode-select">Modo</label>
+              <select id="mode-select">
+                <option value="orden">En orden</option>
+                <option value="aleatorio">Aleatorio</option>
+              </select>
+            </div>
+
+            <div class="setting-group">
+              <label for="difficulty-select">Dificultad</label>
+              <select id="difficulty-select">
+                <option value="facil">Fácil</option>
+                <option value="medio">Medio</option>
+                <option value="dificil">Difícil</option>
+              </select>
+            </div>
+
+            <div class="setting-group">
+              <label for="digits-select">Cantidad de cifras</label>
+              <input id="digits-select" type="number" min="1" max="5" value="2" />
+            </div>
+          </div>
+        </section>
+
+        <div class="status-row">
+          <div class="status-item">
+            <span class="label">Racha</span>
+            <strong id="streak">0</strong>
+          </div>
+          <div class="status-item">
+            <span class="label">Vidas</span>
+            <strong id="lives">3</strong>
+          </div>
+        </div>
+
+        <div class="question-panel">
+          <p id="question-type" class="question-label">Suma</p>
+          <h1 id="question">3 + 4</h1>
+          <div id="question-visual" class="question-visual" hidden></div>
+        </div>
+
+        <div class="answer-box">
+          <input
+            id="answer-input"
+            type="number"
+            min="0"
+            step="1"
+            inputmode="numeric"
+            placeholder="Tu respuesta"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="actions">
+          <button id="check-btn" type="button">Comprobar</button>
+          <button id="restart-btn" type="button" class="secondary">Reiniciar</button>
+        </div>
+
+        <p id="message" class="message" aria-live="polite"></p>
+
+        <section class="history-box">
+          <h2>Historial</h2>
+          <ul id="history-list">
+            <li>Sin puntuaciones todavía.</li>
+          </ul>
+        </section>
+      </section>
+
+      <section id="nursing-section" class="game-card app-section nursing-section" role="tabpanel" tabindex="0" aria-labelledby="nursing-tab" hidden>
+        <header class="nursing-header">
+          <div>
+            <p class="eyebrow">MÓDULO DE APOYO · COLOMBIA / IPS</p>
+            <h1>Enfermería</h1>
+            <p class="muted-copy">Herramientas de consulta educativa y organización personal.</p>
+          </div>
+          <span class="module-badge">AUXILIAR DE ESTUDIO</span>
+        </header>
+
+        <aside class="clinical-notice" role="note">
+          <strong>Uso responsable</strong>
+          <p>Este módulo no reemplaza la valoración profesional, una orden médica ni los protocolos vigentes de tu IPS. No diagnostica, interpreta signos vitales ni calcula dosis. Verifica cada procedimiento, rango y medicamento en la fuente institucional vigente antes de actuar.</p>
+          <p>No ingreses nombres, documentos, datos identificables ni información clínica real de pacientes. Los registros quedan en este navegador y no están cifrados.</p>
+        </aside>
+
+        <section class="nursing-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">REGISTRO SIN INTERPRETACIÓN</p>
+              <h2>Mediciones observadas</h2>
+            </div>
+          </div>
+          <p class="section-help">Anota datos de práctica o simulación, con unidad y contexto. La herramienta no clasifica los valores ni genera alertas.</p>
+          <details class="measurement-guide">
+            <summary>Recordatorios generales de medición</summary>
+            <ul>
+              <li><strong>SpO₂:</strong> registra el valor, dispositivo/sitio y calidad de señal observada; revisa las instrucciones de uso del equipo y el protocolo local.</li>
+              <li><strong>Presión arterial:</strong> registra brazo, posición y tamaño de manguito utilizado; sigue el procedimiento vigente de tu IPS y las indicaciones del fabricante.</li>
+              <li><strong>Temperatura:</strong> anota el sitio y tipo de termómetro; no mezcles mediciones tomadas con métodos distintos al comparar registros.</li>
+              <li><strong>Pulso y respiración:</strong> documenta unidad, momento y método de observación según el protocolo institucional.</li>
+            </ul>
+            <p>Son recordatorios para organizar una medición; no definen técnica completa, valores de referencia ni conducta clínica.</p>
+          </details>
+
+          <form id="vitals-form" class="nursing-form">
+            <div class="nursing-field">
+              <label for="measurement-context">Contexto anónimo</label>
+              <input id="measurement-context" maxlength="60" placeholder="Ej.: simulación, control de práctica" />
+            </div>
+            <div class="vitals-grid">
+              <div class="nursing-field">
+                <label for="vital-spo2">SpO₂ (%)</label>
+                <input id="vital-spo2" type="number" min="0" max="100" step="0.1" inputmode="decimal" />
+              </div>
+              <div class="nursing-field">
+                <label for="vital-systolic">Presión sistólica (mmHg)</label>
+                <input id="vital-systolic" type="number" min="0" step="1" inputmode="numeric" />
+              </div>
+              <div class="nursing-field">
+                <label for="vital-diastolic">Presión diastólica (mmHg)</label>
+                <input id="vital-diastolic" type="number" min="0" step="1" inputmode="numeric" />
+              </div>
+              <div class="nursing-field">
+                <label for="vital-temperature">Temperatura (°C)</label>
+                <input id="vital-temperature" type="number" min="25" max="45" step="0.1" inputmode="decimal" />
+              </div>
+              <div class="nursing-field">
+                <label for="vital-pulse">Pulso (lpm)</label>
+                <input id="vital-pulse" type="number" min="0" step="1" inputmode="numeric" />
+              </div>
+              <div class="nursing-field">
+                <label for="vital-respiratory">Frecuencia respiratoria (rpm)</label>
+                <input id="vital-respiratory" type="number" min="0" step="1" inputmode="numeric" />
+              </div>
+            </div>
+            <div class="nursing-field">
+              <label for="vital-observation">Observación / método / sitio de medición</label>
+              <textarea id="vital-observation" rows="2" maxlength="300" placeholder="Solo notas de práctica; no incluyas datos identificables."></textarea>
+            </div>
+            <div class="nursing-actions">
+              <button class="nursing-primary" type="submit">Guardar medición</button>
+              <button class="secondary" id="clear-vitals-btn" type="button">Borrar registros</button>
+            </div>
+            <p id="vitals-message" class="nursing-feedback" aria-live="polite"></p>
+          </form>
+
+          <div class="table-wrap">
+            <table class="nursing-table">
+              <caption>Registros locales recientes</caption>
+              <thead>
+                <tr><th>Fecha</th><th>Contexto</th><th>SpO₂</th><th>PA mmHg</th><th>Temp °C</th><th>Pulso</th><th>Resp.</th><th>Nota</th></tr>
+              </thead>
+              <tbody id="vitals-records">
+                <tr><td colspan="8">Aún no hay registros.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="nursing-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">ORIENTACIÓN ANATÓMICA</p>
+              <h2>Planos, ejes y regiones corporales</h2>
+            </div>
+          </div>
+          <p class="section-help">Selecciona una región del esquema para resaltarla. Es un localizador educativo, no una guía diagnóstica.</p>
+          <div class="anatomy-layout">
+            <div class="anatomy-figure-wrap">
+              <div class="anatomy-view-toggle" role="group" aria-label="Vista corporal">
+                <button class="view-toggle active" type="button" data-body-view="anterior" aria-pressed="true">Anterior</button>
+                <button class="view-toggle" type="button" data-body-view="posterior" aria-pressed="false">Posterior</button>
+              </div>
+              <svg id="body-map" class="body-map" viewBox="0 0 300 470" role="img" aria-label="Esquema corporal interactivo, vista anterior">
+                <defs>
+                  <linearGradient id="body-fill" x1="0" x2="1">
+                    <stop offset="0" stop-color="#14273a" />
+                    <stop offset="0.5" stop-color="#1b3247" />
+                    <stop offset="1" stop-color="#14273a" />
+                  </linearGradient>
+                </defs>
+                <circle class="body-silhouette" cx="150" cy="42" r="25" />
+                <path class="body-silhouette" d="M135 68 L165 68 L173 91 L190 99 L208 135 L198 211 L185 247 L178 306 L170 438 L146 438 L140 326 L134 326 L128 438 L104 438 L101 306 L94 247 L82 211 L72 135 L90 99 L127 91 Z" />
+                <path class="body-silhouette" d="M82 109 L58 120 L32 223 L47 229 L82 155 M208 109 L232 120 L258 223 L243 229 L208 155" />
+                <path id="body-plane-overlay" class="body-plane-overlay" d="M147 72 H153 V438 H147 Z" />
+                <g class="body-region" data-region="Cabeza" role="button" tabindex="0" aria-label="Seleccionar cabeza">
+                  <circle class="region-hit" cx="150" cy="42" r="24" />
+                </g>
+                <g class="body-region" data-region="Cuello" role="button" tabindex="0" aria-label="Seleccionar cuello">
+                  <rect class="region-hit" x="137" y="65" width="26" height="25" rx="5" />
+                </g>
+                <g class="body-region" data-region="Tórax" role="button" tabindex="0" aria-label="Seleccionar tórax">
+                  <path class="region-hit" d="M96 99 L126 88 L174 88 L204 99 L193 177 L107 177 Z" />
+                </g>
+                <g class="body-region" data-region="Abdomen" role="button" tabindex="0" aria-label="Seleccionar abdomen">
+                  <path class="region-hit" d="M107 178 L193 178 L184 240 L116 240 Z" />
+                </g>
+                <g class="body-region" data-region="Pelvis" role="button" tabindex="0" aria-label="Seleccionar pelvis">
+                  <path class="region-hit" d="M116 241 L184 241 L177 291 L123 291 Z" />
+                </g>
+                <g class="body-region" data-region="Extremidad superior derecha" role="button" tabindex="0" aria-label="Seleccionar extremidad superior derecha">
+                  <path class="region-hit" d="M82 107 L57 120 L34 217 L49 222 L83 151 Z" />
+                </g>
+                <g class="body-region" data-region="Extremidad superior izquierda" role="button" tabindex="0" aria-label="Seleccionar extremidad superior izquierda">
+                  <path class="region-hit" d="M208 107 L233 120 L256 217 L241 222 L207 151 Z" />
+                </g>
+                <g class="body-region" data-region="Extremidad inferior derecha" role="button" tabindex="0" aria-label="Seleccionar extremidad inferior derecha">
+                  <path class="region-hit" d="M122 292 L149 292 L145 436 L106 436 L101 307 Z" />
+                </g>
+                <g class="body-region" data-region="Extremidad inferior izquierda" role="button" tabindex="0" aria-label="Seleccionar extremidad inferior izquierda">
+                  <path class="region-hit" d="M151 292 L178 292 L185 307 L180 436 L155 436 Z" />
+                </g>
+                <line class="body-axis body-axis-longitudinal" x1="150" y1="16" x2="150" y2="447" />
+                <line class="body-axis body-axis-transverse" x1="25" y1="177" x2="275" y2="177" />
+                <circle class="body-axis body-axis-sagittal" cx="150" cy="177" r="6" />
+              </svg>
+              <p id="selected-region" class="selected-region" aria-live="polite">Selecciona una región del esquema.</p>
+            </div>
+
+            <div class="anatomy-notes">
+              <div class="nursing-field">
+                <label for="plane-select">Plano anatómico</label>
+                <select id="plane-select">
+                  <option value="sagital">Sagital: divide derecha e izquierda</option>
+                  <option value="frontal">Frontal/coronal: divide anterior y posterior</option>
+                  <option value="transversal">Transversal: divide superior e inferior</option>
+                </select>
+              </div>
+              <p id="plane-description" class="anatomy-description">El plano sagital divide el cuerpo en porciones derecha e izquierda.</p>
+              <div class="axis-legend">
+                <h3>Ejes de referencia</h3>
+                <p><span class="axis-dot longitudinal"></span><strong>Longitudinal:</strong> superior ↔ inferior.</p>
+                <p><span class="axis-dot transverse"></span><strong>Transversal:</strong> derecha ↔ izquierda.</p>
+                <p><span class="axis-dot sagittal"></span><strong>Anteroposterior:</strong> anterior ↔ posterior.</p>
+              </div>
+              <p class="section-help">El dibujo es esquemático y no está a escala. “Derecha” e “izquierda” corresponden a la persona representada.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="nursing-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">CUADERNO PERSONAL</p>
+              <h2>Libreta de apuntes por protocolo</h2>
+            </div>
+          </div>
+          <p class="section-help">Organiza recordatorios de estudio y referencias institucionales. No guardes información identificable de pacientes ni uses estas notas como orden clínica.</p>
+          <form id="notes-form" class="nursing-form">
+            <div class="notes-grid">
+              <div class="nursing-field">
+                <label for="note-category">Categoría / protocolo IPS</label>
+                <select id="note-category">
+                  <option>Valoración y registro</option>
+                  <option>Signos vitales</option>
+                  <option>Bioseguridad e infecciones</option>
+                  <option>Seguridad del paciente</option>
+                  <option>Administración segura de medicamentos</option>
+                  <option>Procedimientos / curaciones</option>
+                  <option>Urgencias: referencia institucional</option>
+                  <option>Otro protocolo</option>
+                </select>
+              </div>
+              <div class="nursing-field">
+                <label for="note-source">IPS / fuente y versión</label>
+                <input id="note-source" maxlength="120" placeholder="Nombre del documento y versión (sin datos de pacientes)" />
+              </div>
+            </div>
+            <div class="nursing-field">
+              <label for="note-title">Tema</label>
+              <input id="note-title" maxlength="100" required placeholder="Ej.: pasos para preparar el equipo" />
+            </div>
+            <div class="nursing-field">
+              <label for="note-content">Apunte de estudio</label>
+              <textarea id="note-content" rows="4" maxlength="2000" required placeholder="Escribe un resumen personal y verifica el protocolo institucional vigente. No ingreses órdenes ni datos identificables."></textarea>
+            </div>
+            <div class="nursing-actions">
+              <button class="nursing-primary" type="submit">Guardar apunte</button>
+              <button class="secondary" id="clear-notes-btn" type="button">Borrar libreta</button>
+            </div>
+            <p id="notes-message" class="nursing-feedback" aria-live="polite"></p>
+          </form>
+          <div id="notes-list" class="notes-list">
+            <p class="empty-state">Tu libreta está vacía.</p>
+          </div>
+        </section>
+
+        <section class="nursing-panel references-panel">
+          <p class="eyebrow">CONSULTA Y VERIFICACIÓN</p>
+          <h2>Fuentes oficiales para contrastar</h2>
+          <p class="section-help">Usa la versión vigente adoptada por tu IPS. La presencia de un enlace aquí no implica que contenga un protocolo específico ni sustituye la validación institucional.</p>
+          <ul class="source-list">
+            <li><a href="https://www.minsalud.gov.co/" target="_blank" rel="noopener noreferrer">Ministerio de Salud y Protección Social</a> — lineamientos y normatividad sanitaria colombiana.</li>
+            <li><a href="https://www.invima.gov.co/" target="_blank" rel="noopener noreferrer">INVIMA</a> — información regulatoria y de seguridad de medicamentos y dispositivos.</li>
+            <li><a href="https://www.ins.gov.co/" target="_blank" rel="noopener noreferrer">Instituto Nacional de Salud</a> — vigilancia y orientaciones de salud pública.</li>
+          </ul>
+          <p class="clinical-notice compact-notice">Para dosificación y administración: consulta la orden vigente, ficha técnica oficial, cálculo independiente y protocolo aprobado por tu IPS; solicita verificación profesional cuando aplique. Este módulo deliberadamente no calcula ni recomienda dosis.</p>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      const STORAGE_KEY = 'entrenador-matematicas-v2';
+
+      const operationConfig = {
+        suma: { label: 'Sumas', category: 'Aritmética' },
+        resta: { label: 'Restas', category: 'Aritmética' },
+        multiplicacion: { label: 'Multiplicación', category: 'Aritmética' },
+        division: { label: 'División', category: 'Aritmética' },
+        compuestas: { label: 'Compuestas', category: 'Aritmética' },
+        logicos: { label: 'Comparaciones', category: 'Lógica' },
+        logicaBooleana: { label: 'Lógica booleana', category: 'Lógica' },
+        algebra: { label: 'Álgebra', category: 'Álgebra' },
+        fisica: { label: 'Física', category: 'Finalboss Ultimate' },
+        derivadas: { label: 'Derivadas', category: 'Finalboss Ultimate' },
+        limites: { label: 'Límites', category: 'Finalboss Ultimate' },
+        integrales: { label: 'Cálculo integral', category: 'Finalboss Ultimate' },
+        estadistica: { label: 'Media y mediana', category: 'Estadística' },
+        vectores: { label: 'Cálculo vectorial', category: 'Estadística' },
+        graficas: { label: 'Gráficas de barras', category: 'Estadística' },
+        graficasLineales: { label: 'Gráficas lineales', category: 'Estadística' },
+        diagramaCircular: { label: 'Diagramas circulares', category: 'Estadística' },
+        probabilidad: { label: 'Probabilidad general', category: 'Probabilidad' },
+        dadoUno: { label: 'Juego de un dado', category: 'Probabilidad' },
+        dadosDos: { label: 'Juego de dos dados', category: 'Probabilidad' },
+      };
+
+      const DEFAULT_SETTINGS = {
+        operations: {
+          suma: true,
+          resta: true,
+          multiplicacion: true,
+          division: true,
+          compuestas: true,
+          logicos: true,
+          logicaBooleana: true,
+          algebra: true,
+          fisica: true,
+          derivadas: true,
+          limites: true,
+          integrales: true,
+          estadistica: true,
+          vectores: true,
+          graficas: true,
+          graficasLineales: true,
+          diagramaCircular: true,
+          probabilidad: true,
+          dadoUno: true,
+          dadosDos: true,
+        },
+        mode: 'aleatorio',
+        difficulty: 'medio',
+        digits: 2,
+      };
+
+      const state = {
+        score: 0,
+        streak: 0,
+        lives: 3,
+        best: 0,
+        history: [],
+        gameOver: false,
+        currentQuestion: null,
+        operationQueue: [],
+        operationIndex: 0,
+        settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
+      };
+
+      const elements = {
+        bestScore: document.getElementById('best-score'),
+        score: document.getElementById('score'),
+        streak: document.getElementById('streak'),
+        lives: document.getElementById('lives'),
+        operationOptions: document.getElementById('operation-options'),
+        modeSelect: document.getElementById('mode-select'),
+        difficultySelect: document.getElementById('difficulty-select'),
+        digitsSelect: document.getElementById('digits-select'),
+        questionType: document.getElementById('question-type'),
+        question: document.getElementById('question'),
+        questionVisual: document.getElementById('question-visual'),
+        answerInput: document.getElementById('answer-input'),
+        checkBtn: document.getElementById('check-btn'),
+        restartBtn: document.getElementById('restart-btn'),
+        message: document.getElementById('message'),
+        historyList: document.getElementById('history-list'),
+      };
+
+      function randomNumber(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function clampDigits(value) {
+        const digits = Number(value) || 1;
+        return Math.min(5, Math.max(1, digits));
+      }
+
+      function getDigitRange(digits) {
+        const max = Math.pow(10, digits) - 1;
+        return { min: 1, max };
+      }
+
+      function getDifficultyRange() {
+        const difficulty = state.settings.difficulty;
+        const digits = clampDigits(state.settings.digits);
+        const baseMax = Math.pow(10, digits) - 1;
+
+        if (difficulty === 'facil') {
+          return { a: [1, Math.max(9, Math.min(12, baseMax))], b: [1, Math.max(9, Math.min(12, baseMax))] };
+        }
+
+        if (difficulty === 'dificil') {
+          return { a: [10, Math.max(20, baseMax)], b: [10, Math.max(20, baseMax)] };
+        }
+
+        return { a: [5, Math.max(15, baseMax)], b: [5, Math.max(15, baseMax)] };
+      }
+
+      function getActiveOperations() {
+        return Object.keys(state.settings.operations).filter((key) => state.settings.operations[key]);
+      }
+
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          best: state.best,
+          history: state.history,
+          settings: state.settings,
+        }));
+      }
+
+      function loadSavedState() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+          if (saved.best) state.best = Number(saved.best);
+          if (Array.isArray(saved.history)) state.history = saved.history;
+          if (saved.settings) {
+            state.settings = {
+              ...JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
+              ...saved.settings,
+              operations: {
+                ...DEFAULT_SETTINGS.operations,
+                ...(saved.settings.operations || {}),
+              },
+            };
+          }
+        } catch (error) {
+          state.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+        }
+      }
+
+      function updateHud() {
+        elements.bestScore.textContent = String(state.best);
+        elements.score.textContent = String(state.score);
+        elements.streak.textContent = String(state.streak);
+        elements.lives.textContent = String(state.lives);
+      }
+
+      function renderHistory() {
+        if (!state.history.length) {
+          elements.historyList.innerHTML = '<li>Sin puntuaciones todavía.</li>';
+          return;
+        }
+
+        elements.historyList.innerHTML = state.history
+          .slice(0, 5)
+          .map((item) => `<li>${item}</li>`)
+          .join('');
+      }
+
+      function setMessage(text, type = 'info') {
+        elements.message.textContent = text;
+        elements.message.className = `message ${type}`;
+      }
+
+      class QuestionVisualizer {
+        static render(question) {
+          if (!question.visual) return '';
+          if (question.visual.type === 'bar') return this.renderBarChart(question.visual);
+          if (question.visual.type === 'line') return this.renderLineChart(question.visual);
+          if (question.visual.type === 'pie') return this.renderPieChart(question.visual);
+          if (question.visual.type === 'dice') return this.renderDice(question.visual);
+          if (question.visual.type === 'vector') return this.renderVectors(question.visual);
+          return '';
+        }
+
+        static getNiceStep(maxValue) {
+          const roughStep = maxValue / 4;
+          const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep || 1)));
+          const normalized = roughStep / magnitude;
+          const niceFraction = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+          return niceFraction * magnitude;
+        }
+
+        static formatValue(value) {
+          return Number.isInteger(value)
+            ? String(value)
+            : String(Number(value.toFixed(2)));
+        }
+
+        static renderBarChart({ labels, values }) {
+          const rawMax = Math.max(...values, 1);
+          const step = this.getNiceStep(rawMax);
+          const max = Math.ceil(rawMax / step) * step;
+          const chartWidth = 480;
+          const chartHeight = 240;
+          const plot = { left: 48, right: 464, top: 18, bottom: 190 };
+          const plotHeight = plot.bottom - plot.top;
+          const bandWidth = (plot.right - plot.left) / labels.length;
+          const barWidth = Math.min(52, bandWidth * 0.56);
+          const grid = Array.from({ length: Math.round(max / step) + 1 }, (_, index) => {
+            const value = index * step;
+            const y = plot.bottom - value / max * plotHeight;
+            return `<line class="chart-grid" x1="${plot.left}" y1="${y}" x2="${plot.right}" y2="${y}" />
+              <text x="${plot.left - 8}" y="${y + 4}" text-anchor="end">${this.formatValue(value)}</text>`;
+          }).join('');
+          const bars = values.map((value, index) => {
+            const height = value / max * plotHeight;
+            const x = plot.left + index * bandWidth + (bandWidth - barWidth) / 2;
+            const y = plot.bottom - height;
+            return `
+              <rect class="chart-bar" x="${x}" y="${y}" width="${barWidth}" height="${height}" rx="4" />
+              <text x="${x + barWidth / 2}" y="${Math.max(plot.top + 11, y - 7)}" text-anchor="middle">${this.formatValue(value)}</text>
+              <text x="${x + barWidth / 2}" y="${plot.bottom + 22}" text-anchor="middle">${labels[index]}</text>
+            `;
+          }).join('');
+
+          return `<svg class="chart-svg" viewBox="0 0 ${chartWidth} ${chartHeight}" role="img" aria-label="Gráfica de barras: ${labels.map((label, i) => `${label} ${values[i]}`).join(', ')}">
+            ${grid}
+            <line class="chart-axis" x1="${plot.left}" y1="${plot.top}" x2="${plot.left}" y2="${plot.bottom}" />
+            <line class="chart-axis" x1="${plot.left}" y1="${plot.bottom}" x2="${plot.right}" y2="${plot.bottom}" />
+            ${bars}
+          </svg>`;
+        }
+
+        static renderLineChart({ labels, values }) {
+          const rawMax = Math.max(...values, 1);
+          const step = this.getNiceStep(rawMax);
+          const max = Math.ceil(rawMax / step) * step;
+          const area = { left: 48, right: 382, top: 18, bottom: 174 };
+          const plotHeight = area.bottom - area.top;
+          const grid = Array.from({ length: Math.round(max / step) + 1 }, (_, index) => {
+            const value = index * step;
+            const y = area.bottom - value / max * plotHeight;
+            return `<line class="chart-grid" x1="${area.left}" y1="${y}" x2="${area.right}" y2="${y}" />
+              <text x="${area.left - 8}" y="${y + 4}" text-anchor="end">${this.formatValue(value)}</text>`;
+          }).join('');
+          const pointsData = values.map((value, index) => ({
+            x: area.left + index * ((area.right - area.left) / (values.length - 1)),
+            y: area.bottom - value / max * plotHeight,
+          }));
+          const points = pointsData.map((point) => `${point.x},${point.y}`).join(' ');
+          const markers = pointsData.map((point, index) => `
+            <circle class="chart-point" cx="${point.x}" cy="${point.y}" r="4.5" />
+            <text x="${point.x}" y="${Math.max(area.top + 11, point.y - 9)}" text-anchor="middle">${this.formatValue(values[index])}</text>
+            <text x="${point.x}" y="198" text-anchor="middle">${labels[index]}</text>
+          `).join('');
+          return `<svg class="chart-svg" viewBox="0 0 400 220" role="img" aria-label="Gráfica lineal: ${labels.map((label, i) => `${label} ${values[i]}`).join(', ')}">
+            ${grid}
+            <line class="chart-axis" x1="${area.left}" y1="${area.top}" x2="${area.left}" y2="${area.bottom}" />
+            <line class="chart-axis" x1="${area.left}" y1="${area.bottom}" x2="${area.right}" y2="${area.bottom}" />
+            <polyline class="chart-line" points="${points}" />
+            ${markers}
+          </svg>`;
+        }
+
+        static renderPieChart({ labels, values, target }) {
+          const colors = ['#14f1d9', '#ff4fd8', '#a78bfa', '#ffd166'];
+          let angle = -Math.PI / 2;
+          const total = values.reduce((sum, value) => sum + value, 0);
+          const slices = values.map((value, index) => {
+            const nextAngle = angle + (value / total) * Math.PI * 2;
+            const middleAngle = (angle + nextAngle) / 2;
+            const x1 = 100 + 75 * Math.cos(angle);
+            const y1 = 100 + 75 * Math.sin(angle);
+            const x2 = 100 + 75 * Math.cos(nextAngle);
+            const y2 = 100 + 75 * Math.sin(nextAngle);
+            const labelX = 100 + 48 * Math.cos(middleAngle);
+            const labelY = 100 + 48 * Math.sin(middleAngle);
+            const largeArc = nextAngle - angle > Math.PI ? 1 : 0;
+            const path = `M 100 100 L ${x1} ${y1} A 75 75 0 ${largeArc} 1 ${x2} ${y2} Z`;
+            angle = nextAngle;
+            return `<path class="chart-pie-slice" d="${path}" fill="${colors[index % colors.length]}" />
+              <text x="${labelX}" y="${labelY}" text-anchor="middle" dominant-baseline="middle" fill="#07111c" font-weight="800">${value}%</text>`;
+          }).join('');
+          const legend = labels.map((label, index) => `
+            <span class="legend-item">
+              <span class="legend-swatch" style="background:${colors[index % colors.length]}"></span>
+              ${label}
+            </span>
+          `).join('');
+
+          return `<svg class="chart-svg" viewBox="0 0 200 200" role="img" aria-label="Diagrama circular con categorías ${labels.join(', ')}">
+              ${slices}
+            </svg>
+            <div class="chart-legend">${legend}</div>
+            <p class="vector-display">¿Qué porcentaje representa ${target}?</p>`;
+        }
+
+        static renderDice({ dice, targetFace, targetSum }) {
+          const positions = {
+            1: [5],
+            2: [1, 9],
+            3: [1, 5, 9],
+            4: [1, 3, 7, 9],
+            5: [1, 3, 5, 7, 9],
+            6: [1, 3, 4, 6, 7, 9],
+          };
+          const dieMarkup = (value) => `
+            <div class="die" role="img" aria-label="Dado mostrando ${value}">
+              ${Array.from({ length: 9 }, (_, index) => `<span class="${positions[value].includes(index + 1) ? 'die-pip' : ''}"></span>`).join('')}
+            </div>
+          `;
+          const diceMarkup = dice.map(dieMarkup).join('');
+          const caption = targetFace
+            ? `Cara objetivo: ${targetFace}`
+            : `Objetivo: suma ${targetSum}. Ejemplo: ${dice.join(' + ')} = ${dice.reduce((sum, value) => sum + value, 0)}`;
+          return `<div class="dice-display">${diceMarkup}</div><p class="vector-display">${caption}</p>`;
+        }
+
+        static renderVectors({ vectors }) {
+          const colors = ['#14f1d9', '#ff4fd8'];
+          const plane = { left: 55, right: 265, top: 20, bottom: 230 };
+          const center = { x: 160, y: 125 };
+          const scale = 21;
+          const grid = [];
+          for (let unit = -5; unit <= 5; unit += 1) {
+            const x = center.x + unit * scale;
+            const y = center.y - unit * scale;
+            grid.push(`<line class="vector-grid" x1="${x}" y1="${plane.top}" x2="${x}" y2="${plane.bottom}" />`);
+            grid.push(`<line class="vector-grid" x1="${plane.left}" y1="${y}" x2="${plane.right}" y2="${y}" />`);
+            if (unit !== 0) {
+              grid.push(`<text class="vector-tick" x="${x}" y="${center.y + 14}" text-anchor="middle">${unit}</text>`);
+              grid.push(`<text class="vector-tick" x="${center.x - 8}" y="${y + 3}" text-anchor="end">${unit}</text>`);
+            }
+          }
+
+          const arrows = vectors.map((vector, index) => {
+            const endX = center.x + vector.x * scale;
+            const endY = center.y - vector.y * scale;
+            return `<line class="vector-arrow" style="stroke:${colors[index]}" x1="${center.x}" y1="${center.y}" x2="${endX}" y2="${endY}" marker-end="url(#arrow-${index})" />
+              <circle cx="${endX}" cy="${endY}" r="3" fill="${colors[index]}" />
+              <text x="${endX + 6}" y="${endY - 7}" fill="${colors[index]}" font-size="11" font-weight="bold">${vector.name}(${vector.x},${vector.y})</text>`;
+          }).join('');
+          const markers = colors.map((color, index) => `<marker id="arrow-${index}" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="${color}" /></marker>`).join('');
+          const vectorLabels = vectors.map((vector) => `${vector.name}=(${vector.x}, ${vector.y})`).join(' · ');
+          return `<svg class="chart-svg vector-plane" viewBox="0 0 320 260" role="img" aria-label="Plano cartesiano con los vectores ${vectorLabels}, escala de menos cinco a cinco">
+              <defs>${markers}</defs>
+              ${grid.join('')}
+              <line class="vector-axis" x1="${plane.left}" y1="${center.y}" x2="${plane.right + 4}" y2="${center.y}" marker-end="url(#axis-x)" />
+              <line class="vector-axis" x1="${center.x}" y1="${plane.bottom}" x2="${center.x}" y2="${plane.top - 4}" marker-end="url(#axis-y)" />
+              <defs>
+                <marker id="axis-x" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#14f1d9" /></marker>
+                <marker id="axis-y" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#14f1d9" /></marker>
+              </defs>
+              <text class="vector-origin" x="${center.x - 7}" y="${center.y + 13}" text-anchor="end">0</text>
+              <text class="vector-axis-label" x="${plane.right + 9}" y="${center.y + 4}">x</text>
+              <text class="vector-axis-label" x="${center.x + 5}" y="${plane.top - 5}">y</text>
+              ${arrows}
+            </svg>
+            <p class="vector-display">${vectorLabels}</p>`;
+        }
+      }
+
+      function renderOperationOptions() {
+        const categories = Object.entries(operationConfig).reduce((groups, entry) => {
+          const category = entry[1].category;
+          groups[category] = groups[category] || [];
+          groups[category].push(entry);
+          return groups;
+        }, {});
+
+        elements.operationOptions.innerHTML = Object.entries(categories).map(([category, entries]) => `
+          <section class="operation-category ${category === 'Finalboss Ultimate' ? 'finalboss' : ''}">
+            <h3>${category}</h3>
+            <div class="operation-grid">
+              ${entries.map(([key, config]) => {
+                const checked = state.settings.operations[key] ? 'checked' : '';
+                const klass = state.settings.operations[key] ? 'option-card checked' : 'option-card';
+                return `
+                  <label class="${klass}">
+                    <input type="checkbox" data-operation="${key}" ${checked} />
+                    <span>${config.label}</span>
+                  </label>
+                `;
+              }).join('')}
+            </div>
+          </section>
+        `).join('');
+      }
+
+      function syncSettingsControls() {
+        elements.modeSelect.value = state.settings.mode;
+        elements.difficultySelect.value = state.settings.difficulty;
+        elements.digitsSelect.value = String(clampDigits(state.settings.digits));
+        renderOperationOptions();
+      }
+
+      function nextOperationFromQueue() {
+        const active = getActiveOperations();
+        if (!active.length) {
+          state.operationQueue = [];
+          state.operationIndex = 0;
+          return null;
+        }
+
+        if (state.settings.mode === 'orden') {
+          if (!state.operationQueue.length || state.operationQueue.length !== active.length) {
+            state.operationQueue = [...active];
+            state.operationIndex = 0;
+          }
+
+          const op = state.operationQueue[state.operationIndex % state.operationQueue.length];
+          state.operationIndex = (state.operationIndex + 1) % state.operationQueue.length;
+          return op;
+        }
+
+        return active[randomNumber(0, active.length - 1)];
+      }
+
+      function parseNumericInput(value) {
+        if (!value || value.trim() === '') return null;
+        const cleaned = value.trim().replace(',', '.');
+        if (!/^[-+]?\d+(?:\.\d+)?$/.test(cleaned)) return null;
+        return Number(cleaned);
+      }
+
+      function parseBooleanInput(value) {
+        const normalized = value.trim().toLowerCase();
+        if (['v', 'verdadero', 'true', '1', 'si', 'sí'].includes(normalized)) return true;
+        if (['f', 'falso', 'false', '0', 'no'].includes(normalized)) return false;
+        return null;
+      }
+
+      function buildAddition() {
+        const { a, b } = getDifficultyRange();
+        const first = randomNumber(a[0], a[1]);
+        const second = randomNumber(b[0], b[1]);
+        return {
+          type: 'number',
+          label: 'Sumas',
+          expression: `${first} + ${second}`,
+          answer: first + second,
+        };
+      }
+
+      function buildLineGraphQuestion() {
+        const labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May'];
+        const values = labels.map(() => randomNumber(2, getAdvancedRange()));
+        const targetIndex = randomNumber(0, labels.length - 1);
+        return {
+          type: 'number',
+          label: 'Estadística · gráfica lineal',
+          expression: `Según la gráfica, ¿qué valor tiene ${labels[targetIndex]}?`,
+          answer: values[targetIndex],
+          visual: { type: 'line', labels, values },
+        };
+      }
+
+      function buildSubtraction() {
+        const { a, b } = getDifficultyRange();
+        const first = randomNumber(a[0], a[1]);
+        const second = randomNumber(b[0], b[1]);
+        const left = Math.max(first, second);
+        const right = Math.min(first, second);
+        return {
+          type: 'number',
+          label: 'Restas',
+          expression: `${left} - ${right}`,
+          answer: left - right,
+        };
+      }
+
+      function buildMultiplication() {
+        const digits = clampDigits(state.settings.digits);
+        const rangeMax = Math.max(9, Math.pow(10, digits) - 1);
+        const first = randomNumber(1, rangeMax);
+        const second = randomNumber(1, Math.min(12, rangeMax));
+        return {
+          type: 'number',
+          label: 'Multiplicación',
+          expression: `${first} × ${second}`,
+          answer: first * second,
+        };
+      }
+
+      function buildDivision() {
+        const digits = clampDigits(state.settings.digits);
+        const divisor = randomNumber(2, Math.min(12, Math.pow(10, digits) - 1));
+        const quotient = randomNumber(1, Math.min(12, Math.pow(10, digits) - 1));
+        const dividend = divisor * quotient;
+        return {
+          type: 'number',
+          label: 'División',
+          expression: `${dividend} ÷ ${divisor}`,
+          answer: quotient,
+        };
+      }
+
+      function buildLogicalQuestion() {
+        const digits = clampDigits(state.settings.digits);
+        const left = randomNumber(1, Math.pow(10, digits) - 1);
+        const right = randomNumber(1, Math.pow(10, digits) - 1);
+        const operators = ['<', '>', '<=', '>=', '==='];
+        const operator = operators[randomNumber(0, operators.length - 1)];
+
+        let result = false;
+        if (operator === '<') result = left < right;
+        if (operator === '>') result = left > right;
+        if (operator === '<=') result = left <= right;
+        if (operator === '>=') result = left >= right;
+        if (operator === '===') result = left === right;
+
+        return {
+          type: 'boolean',
+          label: 'Comparaciones',
+          expression: `${left} ${operator} ${right}`,
+          answer: result,
+        };
+      }
+
+      function buildBooleanQuestion() {
+        const left = Math.random() < 0.5;
+        const right = Math.random() < 0.5;
+        const operators = [
+          { symbol: 'Y', evaluate: (a, b) => a && b },
+          { symbol: 'O', evaluate: (a, b) => a || b },
+          { symbol: 'XOR', evaluate: (a, b) => a !== b },
+        ];
+        const operator = operators[randomNumber(0, operators.length - 1)];
+        const useNot = Math.random() < 0.35;
+        const value = useNot ? !left : left;
+        const expression = useNot
+          ? `NO (${left ? 'Verdadero' : 'Falso'}) ${operator.symbol} ${right ? 'Verdadero' : 'Falso'}`
+          : `${left ? 'Verdadero' : 'Falso'} ${operator.symbol} ${right ? 'Verdadero' : 'Falso'}`;
+
+        return {
+          type: 'boolean',
+          label: 'Lógica booleana',
+          expression,
+          answer: operator.evaluate(value, right),
+        };
+      }
+
+      function buildAlgebraQuestion() {
+        const digits = clampDigits(state.settings.digits);
+        const maxCoefficient = Math.min(12, Math.max(2, Math.pow(10, digits) - 1));
+        const solutionMax = state.settings.difficulty === 'facil'
+          ? 10
+          : state.settings.difficulty === 'dificil' ? 50 : 25;
+        const x = randomNumber(1, solutionMax);
+        const coefficient = randomNumber(1, maxCoefficient);
+        const constant = randomNumber(1, maxCoefficient * 2);
+        const equationType = state.settings.difficulty === 'facil'
+          ? 0
+          : randomNumber(0, 2);
+
+        if (equationType === 0) {
+          const result = coefficient * x + constant;
+          return {
+            type: 'number',
+            label: 'Álgebra · despeja x',
+            expression: `${coefficient}x + ${constant} = ${result}  ·  x = ?`,
+            answer: x,
+          };
+        }
+
+        if (equationType === 1) {
+          const result = coefficient * (x + constant);
+          return {
+            type: 'number',
+            label: 'Álgebra · despeja x',
+            expression: `${coefficient}(x + ${constant}) = ${result}  ·  x = ?`,
+            answer: x,
+          };
+        }
+
+        const result = coefficient * x - constant;
+        return {
+          type: 'number',
+          label: 'Álgebra · despeja x',
+          expression: `${coefficient}x - ${constant} = ${result}  ·  x = ?`,
+          answer: x,
+        };
+      }
+
+      function getAdvancedRange() {
+        const digits = clampDigits(state.settings.digits);
+        return Math.min(1000, Math.pow(10, digits) - 1);
+      }
+
+      function buildPhysicsQuestion() {
+        const max = getAdvancedRange();
+        if (state.settings.difficulty === 'dificil' && Math.random() < 0.5) {
+          const mass = randomNumber(2, Math.max(3, Math.min(max, 100)));
+          const acceleration = randomNumber(1, 20);
+          return {
+            type: 'number',
+            label: 'Física · segunda ley de Newton',
+            expression: `F = m × a: m = ${mass} kg, a = ${acceleration} m/s². F = ? N`,
+            answer: mass * acceleration,
+          };
+        }
+
+        const time = randomNumber(2, 12);
+        const velocity = randomNumber(1, Math.max(2, Math.min(50, max)));
+        return {
+          type: 'number',
+          label: 'Física · movimiento rectilíneo',
+          expression: `d = v × t: v = ${velocity} m/s, t = ${time} s. d = ? m`,
+          answer: velocity * time,
+        };
+      }
+
+      function buildDerivativeQuestion() {
+        const coefficient = randomNumber(1, state.settings.difficulty === 'facil' ? 5 : 12);
+        const exponent = randomNumber(2, state.settings.difficulty === 'dificil' ? 5 : 3);
+        const x = randomNumber(1, state.settings.difficulty === 'dificil' ? 5 : 3);
+        return {
+          type: 'number',
+          label: 'Derivadas · regla de la potencia',
+          expression: `f(x) = ${coefficient}x^${exponent}. Calcula f'(${x})`,
+          answer: coefficient * exponent * Math.pow(x, exponent - 1),
+        };
+      }
+
+      function buildLimitQuestion() {
+        const coefficient = randomNumber(1, state.settings.difficulty === 'facil' ? 5 : 12);
+        const x = randomNumber(1, state.settings.difficulty === 'dificil' ? 6 : 4);
+        const constant = randomNumber(0, 12);
+        const exponent = state.settings.difficulty === 'facil' ? 1 : randomNumber(1, 2);
+        return {
+          type: 'number',
+          label: 'Límites · sustitución directa',
+          expression: `lim x→${x} (${coefficient}x^${exponent} + ${constant}) = ?`,
+          answer: coefficient * Math.pow(x, exponent) + constant,
+        };
+      }
+
+      function buildIntegralQuestion() {
+        const coefficient = randomNumber(1, state.settings.difficulty === 'facil' ? 4 : 8);
+        const exponent = randomNumber(1, state.settings.difficulty === 'dificil' ? 4 : 3);
+        const upperBound = randomNumber(1, state.settings.difficulty === 'dificil' ? 4 : 3);
+        return {
+          type: 'number',
+          label: 'Integral definida · regla de la potencia',
+          expression: `∫₀^${upperBound} ${coefficient}x^${exponent} dx = ? (redondea a 2 decimales si hace falta)`,
+          answer: coefficient * Math.pow(upperBound, exponent + 1) / (exponent + 1),
+        };
+      }
+
+      function buildStatisticsQuestion() {
+        const count = state.settings.difficulty === 'facil'
+          ? 3
+          : state.settings.difficulty === 'dificil' ? 7 : 5;
+        const values = Array.from({ length: count }, () => randomNumber(1, getAdvancedRange()));
+        if (Math.random() < 0.5) {
+          const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+          return {
+            type: 'number',
+            label: 'Estadística · media aritmética',
+            expression: `Calcula la media: ${values.join(', ')} (redondea a 2 decimales si hace falta)`,
+            answer: mean,
+          };
+        }
+
+        const sorted = [...values].sort((a, b) => a - b);
+        const median = sorted[Math.floor(sorted.length / 2)];
+        return {
+          type: 'number',
+          label: 'Estadística · mediana',
+          expression: `Calcula la mediana: ${values.join(', ')}`,
+          answer: median,
+        };
+      }
+
+      function buildVectorQuestion() {
+        const component = () => randomNumber(-5, 5);
+        const vectors = [
+          { name: 'A', x: component(), y: component() },
+          { name: 'B', x: component(), y: component() },
+        ];
+        return {
+          type: 'number',
+          label: 'Estadística · producto escalar',
+          expression: 'Calcula A · B (producto escalar)',
+          answer: vectors[0].x * vectors[1].x + vectors[0].y * vectors[1].y,
+          visual: { type: 'vector', vectors },
+        };
+      }
+
+      function buildBarGraphQuestion() {
+        const labels = ['A', 'B', 'C', 'D'];
+        const values = labels.map(() => randomNumber(2, getAdvancedRange()));
+        const targetIndex = randomNumber(0, labels.length - 1);
+        return {
+          type: 'number',
+          label: 'Estadística · gráfica de barras',
+          expression: `Según la gráfica, ¿qué valor tiene la categoría ${labels[targetIndex]}?`,
+          answer: values[targetIndex],
+          visual: { type: 'bar', labels, values },
+        };
+      }
+
+      function buildPieChartQuestion() {
+        const labels = ['A', 'B', 'C', 'D'];
+        const tenths = [1, 1, 1, 1];
+        let remaining = 10;
+        for (let index = 0; index < tenths.length - 1; index += 1) {
+          const amount = randomNumber(1, remaining - (tenths.length - index - 1));
+          tenths[index] = amount;
+          remaining -= amount;
+        }
+        tenths[tenths.length - 1] = remaining;
+        const values = tenths.map((amount) => amount * 10);
+        const targetIndex = randomNumber(0, labels.length - 1);
+        return {
+          type: 'number',
+          label: 'Estadística · diagrama circular',
+          expression: `Observa el diagrama. ¿Qué porcentaje corresponde a la categoría ${labels[targetIndex]}?`,
+          answer: values[targetIndex],
+          visual: { type: 'pie', labels, values, target: labels[targetIndex] },
+        };
+      }
+
+      function buildProbabilityQuestion() {
+        const total = randomNumber(2, 10) * 10;
+        const favorable = randomNumber(1, total - 1);
+        return {
+          type: 'number',
+          label: 'Probabilidad · porcentaje',
+          expression: `Hay ${favorable} casos favorables de ${total}. ¿Qué probabilidad hay en %? (redondea a 2 decimales si hace falta)`,
+          answer: favorable / total * 100,
+        };
+      }
+
+      function buildSingleDieQuestion() {
+        const face = randomNumber(1, 6);
+        return {
+          type: 'number',
+          label: 'Probabilidad · un dado',
+          expression: `Al lanzar un dado justo, ¿cuál es la probabilidad de obtener ${face}? Responde en %.`,
+          answer: 100 / 6,
+          visual: { type: 'dice', dice: [face], targetFace: face },
+        };
+      }
+
+      function buildTwoDiceQuestion() {
+        const targetSum = randomNumber(2, 12);
+        const favorableOutcomes = targetSum <= 7 ? targetSum - 1 : 13 - targetSum;
+        return {
+          type: 'number',
+          label: 'Probabilidad · dos dados',
+          expression: `Al lanzar dos dados justos, ¿cuál es la probabilidad de que sumen ${targetSum}? Responde en %.`,
+          answer: favorableOutcomes / 36 * 100,
+          visual: {
+            type: 'dice',
+            dice: [randomNumber(1, 6), randomNumber(1, 6)],
+            targetSum,
+          },
+        };
+      }
+
+      function buildCompoundQuestion() {
+        const digits = clampDigits(state.settings.digits);
+        const max = Math.max(5, Math.pow(10, digits) - 1);
+        const a = randomNumber(1, max);
+        const b = randomNumber(1, max);
+        const c = randomNumber(1, max);
+        const patterns = [
+          { expr: `(${a} + ${b}) × ${c}`, answer: (a + b) * c },
+          { expr: `${a} + (${b} × ${c})`, answer: a + (b * c) },
+          { expr: `(${a} × ${b}) - ${c}`, answer: (a * b) - c },
+          { expr: `${a} - (${b} + ${c})`, answer: a - (b + c) },
+        ];
+        const chosen = patterns[randomNumber(0, patterns.length - 1)];
+        return {
+          type: 'number',
+          label: 'Compuestas',
+          expression: chosen.expr,
+          answer: chosen.answer,
+        };
+      }
+
+      function buildQuestionForOperation(op) {
+        if (op === 'suma') return buildAddition();
+        if (op === 'resta') return buildSubtraction();
+        if (op === 'multiplicacion') return buildMultiplication();
+        if (op === 'division') return buildDivision();
+        if (op === 'logicos') return buildLogicalQuestion();
+        if (op === 'logicaBooleana') return buildBooleanQuestion();
+        if (op === 'algebra') return buildAlgebraQuestion();
+        if (op === 'fisica') return buildPhysicsQuestion();
+        if (op === 'derivadas') return buildDerivativeQuestion();
+        if (op === 'limites') return buildLimitQuestion();
+        if (op === 'integrales') return buildIntegralQuestion();
+        if (op === 'estadistica') return buildStatisticsQuestion();
+        if (op === 'vectores') return buildVectorQuestion();
+        if (op === 'graficas') return buildBarGraphQuestion();
+        if (op === 'graficasLineales') return buildLineGraphQuestion();
+        if (op === 'diagramaCircular') return buildPieChartQuestion();
+        if (op === 'probabilidad') return buildProbabilityQuestion();
+        if (op === 'dadoUno') return buildSingleDieQuestion();
+        if (op === 'dadosDos') return buildTwoDiceQuestion();
+        return buildCompoundQuestion();
+      }
+
+      function generateQuestion() {
+        const activeOperations = getActiveOperations();
+        if (!activeOperations.length) {
+          setMessage('Selecciona al menos una operación para empezar.', 'info');
+          elements.question.textContent = '—';
+          elements.questionType.textContent = 'Sin selección';
+          elements.answerInput.value = '';
+          return;
+        }
+
+        const chosenOperation = nextOperationFromQueue();
+        const question = buildQuestionForOperation(chosenOperation);
+        state.currentQuestion = {
+          operation: chosenOperation,
+          type: question.type,
+          label: question.label,
+          expression: question.expression,
+          answer: question.answer,
+          visual: question.visual || null,
+        };
+
+        elements.questionType.textContent = question.label;
+        elements.question.textContent = question.expression;
+        const visualMarkup = QuestionVisualizer.render(question);
+        elements.questionVisual.innerHTML = visualMarkup;
+        elements.questionVisual.hidden = visualMarkup === '';
+        elements.answerInput.value = '';
+        elements.answerInput.type = question.type === 'boolean' ? 'text' : 'number';
+        elements.answerInput.placeholder = question.type === 'boolean' ? 'V / F' : 'Tu respuesta';
+        elements.answerInput.min = question.type === 'boolean' ? '' : '-1000000000';
+      }
+
+      function getCorrectAnswerText() {
+        if (!state.currentQuestion) return '';
+        if (state.currentQuestion.type === 'boolean') {
+          return state.currentQuestion.answer ? 'Verdadero' : 'Falso';
+        }
+        return String(state.currentQuestion.answer);
+      }
+
+      function checkAnswer() {
+        if (state.gameOver) return;
+        if (!state.currentQuestion) {
+          setMessage('Primero genera una operación.', 'info');
+          return;
+        }
+
+        const inputValue = elements.answerInput.value.trim();
+
+        if (state.currentQuestion.type === 'boolean') {
+          const parsed = parseBooleanInput(inputValue);
+          if (parsed === null) {
+            setMessage('Escribe Verdadero o Falso.', 'info');
+            return;
+          }
+
+          if (parsed === state.currentQuestion.answer) {
+            handleCorrectAnswer();
+          } else {
+            handleWrongAnswer();
+          }
+          return;
+        }
+
+        const parsed = parseNumericInput(inputValue);
+        if (parsed === null) {
+          setMessage('Escribe un número válido.', 'info');
+          return;
+        }
+
+        if (Math.round(parsed * 100) === Math.round(state.currentQuestion.answer * 100)) {
+          handleCorrectAnswer();
+        } else {
+          handleWrongAnswer();
+        }
+      }
+
+      function handleCorrectAnswer() {
+        const basePoints = 10;
+        state.score += basePoints + (state.streak * 2);
+        state.streak += 1;
+        state.best = Math.max(state.best, state.score);
+        setMessage('¡Correcto! Muy bien.', 'success');
+        saveState();
+        updateHud();
+        generateQuestion();
+      }
+
+      function handleWrongAnswer() {
+        state.streak = 0;
+        state.lives -= 1;
+        setMessage(`Incorrecto. La respuesta correcta era ${getCorrectAnswerText()}.`, 'error');
+        updateHud();
+
+        if (state.lives <= 0) {
+          endGame();
+          return;
+        }
+
+        generateQuestion();
+      }
+
+      function endGame() {
+        state.gameOver = true;
+        state.history.unshift(`Puntaje final: ${state.score}`);
+        state.history = state.history.slice(0, 5);
+        saveState();
+        renderHistory();
+        updateHud();
+        setMessage(`¡Juego terminado! Tu puntuación fue ${state.score}.`, 'error');
+        elements.answerInput.disabled = true;
+        elements.checkBtn.disabled = true;
+      }
+
+      function resetGame() {
+        state.score = 0;
+        state.streak = 0;
+        state.lives = 3;
+        state.gameOver = false;
+        state.operationQueue = [];
+        state.operationIndex = 0;
+        elements.answerInput.disabled = false;
+        elements.checkBtn.disabled = false;
+        setMessage('¡Nuevo juego empezado!', 'info');
+        updateHud();
+        generateQuestion();
+      }
+
+      function handleOperationToggle(event) {
+        const checkbox = event.target;
+        const key = checkbox.dataset.operation;
+        if (!key) return;
+
+        state.settings.operations[key] = checkbox.checked;
+        const active = getActiveOperations();
+        if (!active.length) {
+          setMessage('Debes dejar al menos una operación activa.', 'info');
+          checkbox.checked = true;
+          state.settings.operations[key] = true;
+        }
+        checkbox.closest('.option-card').classList.toggle('checked', checkbox.checked);
+        state.operationQueue = [];
+        state.operationIndex = 0;
+        saveState();
+        generateQuestion();
+      }
+
+      function bindEvents() {
+        elements.modeSelect.addEventListener('change', (event) => {
+          state.settings.mode = event.target.value;
+          state.operationQueue = [];
+          state.operationIndex = 0;
+          saveState();
+          generateQuestion();
+        });
+
+        elements.difficultySelect.addEventListener('change', (event) => {
+          state.settings.difficulty = event.target.value;
+          saveState();
+          generateQuestion();
+        });
+
+        elements.digitsSelect.addEventListener('input', (event) => {
+          state.settings.digits = clampDigits(event.target.value);
+          event.target.value = String(state.settings.digits);
+          saveState();
+          generateQuestion();
+        });
+
+        elements.operationOptions.addEventListener('change', handleOperationToggle);
+        elements.checkBtn.addEventListener('click', checkAnswer);
+        elements.restartBtn.addEventListener('click', resetGame);
+
+        elements.answerInput.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') checkAnswer();
+        });
+      }
+
+      const NURSING_STORAGE_KEYS = {
+        vitals: 'nursing-vitals-practice-v1',
+        notes: 'nursing-notebook-v1',
+      };
+      const nursingState = {
+        vitals: [],
+        notes: [],
+        storageReady: true,
+        bodyView: 'anterior',
+      };
+
+      const bodyPlaneData = {
+        sagital: {
+          description: 'El plano sagital divide el cuerpo en porciones derecha e izquierda.',
+          path: 'M147 72 H153 V438 H147 Z',
+        },
+        frontal: {
+          description: 'El plano frontal o coronal divide el cuerpo en porciones anterior y posterior.',
+          path: 'M91 98 H209 V235 H91 Z',
+        },
+        transversal: {
+          description: 'El plano transversal divide el cuerpo en porciones superior e inferior.',
+          path: 'M91 174 H209 V190 H91 Z',
+        },
+      };
+
+      const posteriorRegionLabels = {
+        'Tórax': 'Región dorsal torácica',
+        'Abdomen': 'Región lumbar',
+        'Pelvis': 'Región sacra/pélvica',
+      };
+
+      function setNursingFeedback(elementId, message, isError = false) {
+        const element = document.getElementById(elementId);
+        element.textContent = message;
+        element.style.color = isError ? 'var(--danger)' : 'var(--success)';
+      }
+
+      function loadNursingCollection(key) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw === null) return [];
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) throw new Error('El formato guardado no es válido.');
+          return parsed;
+        } catch (error) {
+          nursingState.storageReady = false;
+          setNursingFeedback('vitals-message', 'No se pudieron leer los registros locales. No se guardarán cambios para evitar sobrescribir datos.', true);
+          setNursingFeedback('notes-message', 'No se pudieron leer los apuntes locales. No se guardarán cambios para evitar sobrescribir datos.', true);
+          return [];
+        }
+      }
+
+      function saveNursingCollection(key, collection, feedbackId) {
+        if (!nursingState.storageReady) {
+          setNursingFeedback(feedbackId, 'El almacenamiento local no está disponible para guardar con seguridad.', true);
+          return false;
+        }
+
+        try {
+          localStorage.setItem(key, JSON.stringify(collection));
+          return true;
+        } catch (error) {
+          setNursingFeedback(feedbackId, 'No se pudo guardar en este navegador. Revisa el espacio disponible y los permisos de almacenamiento.', true);
+          return false;
+        }
+      }
+
+      function formatNursingDate(timestamp) {
+        const date = new Date(timestamp);
+        if (Number.isNaN(date.getTime())) return 'Fecha no disponible';
+        return date.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+      }
+
+      function renderVitalsRecords() {
+        const body = document.getElementById('vitals-records');
+        body.replaceChildren();
+        if (!nursingState.vitals.length) {
+          const row = document.createElement('tr');
+          const cell = document.createElement('td');
+          cell.colSpan = 8;
+          cell.textContent = 'Aún no hay registros.';
+          row.append(cell);
+          body.append(row);
+          return;
+        }
+
+        nursingState.vitals.slice(0, 25).forEach((record) => {
+          const row = document.createElement('tr');
+          const pressure = record.systolic && record.diastolic
+            ? `${record.systolic}/${record.diastolic}`
+            : '—';
+          const values = [
+            formatNursingDate(record.timestamp),
+            record.context || '—',
+            record.spo2 || '—',
+            pressure,
+            record.temperature || '—',
+            record.pulse || '—',
+            record.respiratory || '—',
+            record.observation || '—',
+          ];
+          values.forEach((value) => {
+            const cell = document.createElement('td');
+            cell.textContent = String(value);
+            row.append(cell);
+          });
+          body.append(row);
+        });
+      }
+
+      function handleVitalsSubmit(event) {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const numericInputs = [...form.querySelectorAll('input[type="number"]')];
+        if (numericInputs.some((input) => input.value && !input.checkValidity())) {
+          form.reportValidity();
+          return;
+        }
+
+        const getValue = (id) => document.getElementById(id).value.trim();
+        const record = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          timestamp: new Date().toISOString(),
+          context: getValue('measurement-context'),
+          spo2: getValue('vital-spo2'),
+          systolic: getValue('vital-systolic'),
+          diastolic: getValue('vital-diastolic'),
+          temperature: getValue('vital-temperature'),
+          pulse: getValue('vital-pulse'),
+          respiratory: getValue('vital-respiratory'),
+          observation: getValue('vital-observation'),
+        };
+        const hasMeasurement = ['spo2', 'systolic', 'diastolic', 'temperature', 'pulse', 'respiratory']
+          .some((field) => record[field] !== '');
+
+        if (!hasMeasurement) {
+          setNursingFeedback('vitals-message', 'Ingresa al menos una medición para guardar el registro.', true);
+          return;
+        }
+
+        nursingState.vitals.unshift(record);
+        nursingState.vitals = nursingState.vitals.slice(0, 100);
+        if (!saveNursingCollection(NURSING_STORAGE_KEYS.vitals, nursingState.vitals, 'vitals-message')) {
+          nursingState.vitals.shift();
+          return;
+        }
+        renderVitalsRecords();
+        form.reset();
+        setNursingFeedback('vitals-message', 'Registro guardado en este navegador. Sin interpretación clínica.');
+      }
+
+      function handleClearVitals() {
+        if (!nursingState.vitals.length) {
+          setNursingFeedback('vitals-message', 'No hay registros que borrar.');
+          return;
+        }
+        if (!window.confirm('¿Borrar todos los registros de medición guardados en este navegador?')) return;
+        const previous = nursingState.vitals;
+        nursingState.vitals = [];
+        if (saveNursingCollection(NURSING_STORAGE_KEYS.vitals, [], 'vitals-message')) {
+          renderVitalsRecords();
+          setNursingFeedback('vitals-message', 'Registros locales borrados.');
+        } else {
+          nursingState.vitals = previous;
+        }
+      }
+
+      function renderNotes() {
+        const list = document.getElementById('notes-list');
+        list.replaceChildren();
+        if (!nursingState.notes.length) {
+          const empty = document.createElement('p');
+          empty.className = 'empty-state';
+          empty.textContent = 'Tu libreta está vacía.';
+          list.append(empty);
+          return;
+        }
+
+        nursingState.notes
+          .slice()
+          .sort((first, second) => second.createdAt.localeCompare(first.createdAt))
+          .forEach((note) => {
+            const card = document.createElement('article');
+            card.className = 'note-card';
+            const header = document.createElement('header');
+            const category = document.createElement('span');
+            category.textContent = note.category;
+            const date = document.createElement('time');
+            date.dateTime = note.createdAt;
+            date.textContent = formatNursingDate(note.createdAt);
+            header.append(category, date);
+            const title = document.createElement('h3');
+            title.textContent = note.title;
+            const source = document.createElement('p');
+            source.className = 'section-help';
+            source.textContent = note.source ? `Fuente / versión: ${note.source}` : 'Fuente / versión no indicada.';
+            const content = document.createElement('p');
+            content.textContent = note.content;
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.textContent = 'Eliminar apunte';
+            remove.dataset.deleteNote = note.id;
+            remove.setAttribute('aria-label', `Eliminar apunte: ${note.title}`);
+            card.append(header, title, source, content, remove);
+            list.append(card);
+          });
+      }
+
+      function handleNoteSubmit(event) {
+        event.preventDefault();
+        const form = event.currentTarget;
+        if (!form.reportValidity()) return;
+        const note = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          createdAt: new Date().toISOString(),
+          category: document.getElementById('note-category').value,
+          source: document.getElementById('note-source').value.trim(),
+          title: document.getElementById('note-title').value.trim(),
+          content: document.getElementById('note-content').value.trim(),
+        };
+        nursingState.notes.unshift(note);
+        nursingState.notes = nursingState.notes.slice(0, 200);
+        if (!saveNursingCollection(NURSING_STORAGE_KEYS.notes, nursingState.notes, 'notes-message')) {
+          nursingState.notes.shift();
+          return;
+        }
+        renderNotes();
+        form.reset();
+        setNursingFeedback('notes-message', 'Apunte guardado localmente y organizado por categoría.');
+      }
+
+      function handleNotesListClick(event) {
+        const button = event.target.closest('[data-delete-note]');
+        if (!button) return;
+        const noteId = button.dataset.deleteNote;
+        const previous = nursingState.notes;
+        nursingState.notes = nursingState.notes.filter((note) => note.id !== noteId);
+        if (saveNursingCollection(NURSING_STORAGE_KEYS.notes, nursingState.notes, 'notes-message')) {
+          renderNotes();
+          setNursingFeedback('notes-message', 'Apunte eliminado.');
+        } else {
+          nursingState.notes = previous;
+        }
+      }
+
+      function handleClearNotes() {
+        if (!nursingState.notes.length) {
+          setNursingFeedback('notes-message', 'La libreta ya está vacía.');
+          return;
+        }
+        if (!window.confirm('¿Borrar todos los apuntes guardados en este navegador?')) return;
+        const previous = nursingState.notes;
+        nursingState.notes = [];
+        if (saveNursingCollection(NURSING_STORAGE_KEYS.notes, [], 'notes-message')) {
+          renderNotes();
+          setNursingFeedback('notes-message', 'Libreta local borrada.');
+        } else {
+          nursingState.notes = previous;
+        }
+      }
+
+      function setBodyPlane() {
+        const plane = document.getElementById('plane-select').value;
+        const definition = bodyPlaneData[plane];
+        document.getElementById('body-plane-overlay').setAttribute('d', definition.path);
+        document.getElementById('plane-description').textContent = definition.description;
+      }
+
+      function setBodyView(view) {
+        nursingState.bodyView = view;
+        const bodyMap = document.getElementById('body-map');
+        bodyMap.dataset.view = view;
+        bodyMap.setAttribute('aria-label', `Esquema corporal interactivo, vista ${view}`);
+        document.querySelectorAll('[data-body-view]').forEach((button) => {
+          const selected = button.dataset.bodyView === view;
+          button.classList.toggle('active', selected);
+          button.setAttribute('aria-pressed', String(selected));
+        });
+        document.querySelectorAll('.body-region').forEach((region) => {
+          region.classList.remove('selected');
+          const base = region.dataset.region;
+          const regionName = view === 'posterior'
+            ? posteriorRegionLabels[base] || base
+            : base;
+          region.dataset.currentLabel = regionName;
+          region.setAttribute('aria-label', `Seleccionar ${regionName}`);
+        });
+        document.getElementById('selected-region').textContent = `Vista ${view}. Selecciona una región del esquema.`;
+      }
+
+      function selectBodyRegion(region) {
+        document.querySelectorAll('.body-region').forEach((item) => item.classList.remove('selected'));
+        region.classList.add('selected');
+        const label = region.dataset.currentLabel || region.dataset.region;
+        document.getElementById('selected-region').textContent = `Región seleccionada: ${label} (${nursingState.bodyView}).`;
+      }
+
+      function handleBodyMapInteraction(event) {
+        const region = event.target.closest('.body-region');
+        if (region) selectBodyRegion(region);
+      }
+
+      function handleBodyMapKeydown(event) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        const region = event.target.closest('.body-region');
+        if (!region) return;
+        event.preventDefault();
+        selectBodyRegion(region);
+      }
+
+      function switchPage(sectionName) {
+        const showNursing = sectionName === 'nursing';
+        document.getElementById('math-section').hidden = showNursing;
+        document.getElementById('nursing-section').hidden = !showNursing;
+        document.getElementById('math-tab').classList.toggle('active', !showNursing);
+        document.getElementById('nursing-tab').classList.toggle('active', showNursing);
+        document.getElementById('math-tab').setAttribute('aria-selected', String(!showNursing));
+        document.getElementById('nursing-tab').setAttribute('aria-selected', String(showNursing));
+        document.getElementById('math-tab').tabIndex = showNursing ? -1 : 0;
+        document.getElementById('nursing-tab').tabIndex = showNursing ? 0 : -1;
+      }
+
+      function initNursingModule() {
+        nursingState.vitals = loadNursingCollection(NURSING_STORAGE_KEYS.vitals);
+        nursingState.notes = loadNursingCollection(NURSING_STORAGE_KEYS.notes);
+        renderVitalsRecords();
+        renderNotes();
+
+        document.getElementById('vitals-form').addEventListener('submit', handleVitalsSubmit);
+        document.getElementById('clear-vitals-btn').addEventListener('click', handleClearVitals);
+        document.getElementById('notes-form').addEventListener('submit', handleNoteSubmit);
+        document.getElementById('clear-notes-btn').addEventListener('click', handleClearNotes);
+        document.getElementById('notes-list').addEventListener('click', handleNotesListClick);
+        document.getElementById('plane-select').addEventListener('change', setBodyPlane);
+        document.getElementById('body-map').addEventListener('click', handleBodyMapInteraction);
+        document.getElementById('body-map').addEventListener('keydown', handleBodyMapKeydown);
+        document.querySelectorAll('[data-body-view]').forEach((button) => {
+          button.addEventListener('click', () => setBodyView(button.dataset.bodyView));
+        });
+        document.getElementById('math-tab').addEventListener('click', () => switchPage('math'));
+        document.getElementById('nursing-tab').addEventListener('click', () => switchPage('nursing'));
+        document.querySelector('.page-tabs').addEventListener('keydown', (event) => {
+          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+          event.preventDefault();
+          const target = event.key === 'Home' || event.key === 'ArrowLeft' && event.target.id === 'nursing-tab'
+            ? document.getElementById('math-tab')
+            : document.getElementById('nursing-tab');
+          switchPage(target.id === 'nursing-tab' ? 'nursing' : 'math');
+          target.focus();
+        });
+        setBodyPlane();
+        setBodyView('anterior');
+      }
+
+      function init() {
+        loadSavedState();
+        syncSettingsControls();
+        updateHud();
+        renderHistory();
+        bindEvents();
+        generateQuestion();
+      }
+
+      init();
+      initNursingModule();
+    </script>
+  </body>
+</html>
