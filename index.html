@@ -144,6 +144,28 @@
         text-transform: uppercase;
       }
 
+      .operation-guide {
+        margin: 0 0 0.7rem;
+        color: var(--muted);
+        font-size: 0.8rem;
+        line-height: 1.55;
+      }
+
+      .operation-guide summary {
+        width: fit-content;
+        color: var(--primary);
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .operation-guide p {
+        margin: 0.45rem 0 0;
+      }
+
+      .operation-guide strong {
+        color: var(--text);
+      }
+
       .operation-category.finalboss h3 {
         color: #7c3aed;
       }
@@ -1140,6 +1162,15 @@
         elements.operationOptions.innerHTML = Object.entries(categories).map(([category, entries]) => `
           <section class="operation-category ${category === 'Finalboss Ultimate' ? 'finalboss' : ''}">
             <h3>${category}</h3>
+            ${category === 'Lógica' ? `
+              <details class="operation-guide">
+                <summary>Operadores booleanos incluidos</summary>
+                <p><strong>NOT (¬)</strong>: invierte el valor. <strong>AND (∧)</strong>: ambos son True. <strong>OR (∨)</strong>: al menos uno es True.</p>
+                <p><strong>XOR (⊕)</strong>: exactamente uno es True. <strong>NAND (⊼)</strong> y <strong>NOR (⊽)</strong>: niegan AND y OR.</p>
+                <p><strong>XNOR / IFF (↔)</strong>: ambos valores coinciden. <strong>IMPLIES (→)</strong>: solo es False cuando True implica False.</p>
+                <p>Las preguntas combinan operadores y aceptan True/False o Verdadero/Falso.</p>
+              </details>
+            ` : ''}
             <div class="operation-grid">
               ${entries.map(([key, config]) => {
                 const checked = state.settings.operations[key] ? 'checked' : '';
@@ -1194,8 +1225,8 @@
 
       function parseBooleanInput(value) {
         const normalized = value.trim().toLowerCase();
-        if (['v', 'verdadero', 'true', '1', 'si', 'sí'].includes(normalized)) return true;
-        if (['f', 'falso', 'false', '0', 'no'].includes(normalized)) return false;
+        if (['v', 'verdadero', 'true', 't', '1', 'si', 'sí', 'yes'].includes(normalized)) return true;
+        if (['f', 'falso', 'false', 'f', '0', 'no'].includes(normalized)) return false;
         return null;
       }
 
@@ -1287,25 +1318,62 @@
       }
 
       function buildBooleanQuestion() {
-        const left = Math.random() < 0.5;
-        const right = Math.random() < 0.5;
         const operators = [
-          { symbol: 'Y', evaluate: (a, b) => a && b },
-          { symbol: 'O', evaluate: (a, b) => a || b },
-          { symbol: 'XOR', evaluate: (a, b) => a !== b },
+          { name: 'AND', evaluate: (a, b) => a && b },
+          { name: 'OR', evaluate: (a, b) => a || b },
+          { name: 'XOR', evaluate: (a, b) => a !== b },
+          { name: 'NAND', evaluate: (a, b) => !(a && b) },
+          { name: 'NOR', evaluate: (a, b) => !(a || b) },
+          { name: 'XNOR', evaluate: (a, b) => a === b },
+          { name: 'IMPLIES', evaluate: (a, b) => !a || b },
         ];
+        const makeValue = () => {
+          const answer = Math.random() < 0.5;
+          return { expression: answer ? 'True' : 'False', answer };
+        };
+        if (Math.random() < 0.2) {
+          const value = makeValue();
+          return {
+            type: 'boolean',
+            label: 'Lógica booleana · NOT',
+            expression: `NOT (${value.expression}) = ?`,
+            answer: !value.answer,
+          };
+        }
+
         const operator = operators[randomNumber(0, operators.length - 1)];
-        const useNot = Math.random() < 0.35;
-        const value = useNot ? !left : left;
-        const expression = useNot
-          ? `NO (${left ? 'Verdadero' : 'Falso'}) ${operator.symbol} ${right ? 'Verdadero' : 'Falso'}`
-          : `${left ? 'Verdadero' : 'Falso'} ${operator.symbol} ${right ? 'Verdadero' : 'Falso'}`;
+        let left = makeValue();
+        let right = makeValue();
+
+        if (state.settings.difficulty !== 'facil') {
+          if (Math.random() < 0.5) left = { expression: `NOT (${left.expression})`, answer: !left.answer };
+          if (Math.random() < 0.5) right = { expression: `NOT (${right.expression})`, answer: !right.answer };
+        }
+
+        let expression = `(${left.expression} ${operator.name} ${right.expression})`;
+        let answer = operator.evaluate(left.answer, right.answer);
+        let label = `Lógica booleana · ${operator.name}`;
+
+        if (state.settings.difficulty === 'dificil') {
+          const outerOperator = operators[randomNumber(0, operators.length - 1)];
+          const nestedOperator = operators[randomNumber(0, operators.length - 1)];
+          const outerLeft = { expression, answer };
+          const firstRight = makeValue();
+          const secondRight = makeValue();
+          const outerRight = {
+            expression: `(${firstRight.expression} ${nestedOperator.name} ${secondRight.expression})`,
+            answer: nestedOperator.evaluate(firstRight.answer, secondRight.answer),
+          };
+          expression = `(${outerLeft.expression} ${outerOperator.name} ${outerRight.expression})`;
+          answer = outerOperator.evaluate(outerLeft.answer, outerRight.answer);
+          label = `Lógica booleana · ${operator.name} + ${outerOperator.name} + ${nestedOperator.name}`;
+        }
 
         return {
           type: 'boolean',
-          label: 'Lógica booleana',
-          expression,
-          answer: operator.evaluate(value, right),
+          label,
+          expression: `${expression} = ?`,
+          answer,
         };
       }
 
@@ -1600,7 +1668,9 @@
         elements.questionVisual.hidden = visualMarkup === '';
         elements.answerInput.value = '';
         elements.answerInput.type = question.type === 'boolean' ? 'text' : 'number';
-        elements.answerInput.placeholder = question.type === 'boolean' ? 'V / F' : 'Tu respuesta';
+        elements.answerInput.placeholder = question.type === 'boolean'
+          ? 'True / False · Verdadero / Falso'
+          : 'Tu respuesta';
         elements.answerInput.min = question.type === 'boolean' ? '' : '-1000000000';
       }
 
@@ -1624,7 +1694,7 @@
         if (state.currentQuestion.type === 'boolean') {
           const parsed = parseBooleanInput(inputValue);
           if (parsed === null) {
-            setMessage('Escribe Verdadero o Falso.', 'info');
+            setMessage('Responde True/False o Verdadero/Falso.', 'info');
             return;
           }
 
